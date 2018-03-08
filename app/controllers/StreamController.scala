@@ -9,10 +9,12 @@ import akka.util._
 
 
 /**
- * Very simple endless streaming example for speed testing
- */
+* Very simple endless streaming example for speed testing.
+* Reaches 130 Mb/s on my MacBook Pro
+*/
 
-class StreamController @Inject()(cc: ControllerComponents) extends AbstractController(cc) {
+class StreamController @Inject(
+  ) (cc: ControllerComponents) extends AbstractController(cc) {
 
   def chunkedFromSource() = Action { 
     val source = Source.repeat("t" * 1024 )
