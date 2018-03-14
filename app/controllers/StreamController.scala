@@ -47,9 +47,14 @@ class StreamController @Inject(
      * Normalize query parameters in order to accept both ways to represent
      * lists: ?list=item1,item2 and ?list=item1&list=item2 
      */
-    def normalize(in: Seq[String]): Seq[String] = {
-      in.foldLeft(Seq[String]()){ _ ++ _.split(",") }
+    def normalize(in: Seq[String]): Seq[ByteString] = {
+      in.foldLeft(Seq[ByteString]()){ _ ++ _.split(",").map(ByteString(_)) }
     }
+
+    /**
+     * TODO: Create filter map outside the actual filter in order to repeat
+     * as few operations as possible.
+     */
 
     /**
      * Filter function to filter stream by query parameters
@@ -57,9 +62,7 @@ class StreamController @Inject(
     def myFilter(in: List[ByteString], req: Request[AnyContent]) = {
       val params = req.queryString
       val values = getValues(params, "measurements")
-      // normalize(values).foreach(println(_))
-      // println(in(0) == ByteString("max"))
-      in(0) == ByteString("max")
+      normalize(values).foldLeft(false){ _ || in(0) == _}
     }
 
     /**
