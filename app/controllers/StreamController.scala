@@ -16,8 +16,7 @@ import akka.util._
 import akka.stream.alpakka.csv.scaladsl.{CsvParsing, CsvToMap}
 
 /**
- * Very simple endless streaming example for speed testing.
- * Reaches 130 Mb/s on my MacBook Pro
+ * Simple streaming example  
  */
 class StreamController @Inject(
   ) (cc: ControllerComponents) extends AbstractController(cc) {
@@ -30,45 +29,60 @@ class StreamController @Inject(
 
     implicit request: Request[AnyContent] =>
 
-    val params = request.queryString
+    /**
+     * Keywords that can be used for filtering
+     */
+    val keywords = List(
+      "measurements", "variables", "years", "months")
+
+    /** 
+     * 1. Normalize query parameters in order to accept both ways to represent
+     * lists: ?list=item1,item2 and ?list=item1&list=item2
+     * 2. Set default values if query parameter is empty
+     * 3. Convert to ByteString in accordance with Akka
+     */
+    def normalize(in: Seq[String]): Seq[ByteString] = {
+      in.foldLeft(Seq[ByteString]()) { _ ++ _.split(",").map(ByteString(_)) }
+    }
 
     /**
-     * Extract query parameters from request for further processing
+     * Extract query parameters from request by keyword for further processing
      */
-    def getValues(in: Map[String, Seq[String]], key: String) : Seq[String] = {
+    def getValues(key: String, in: Map[String, Seq[String]]) : Seq[ByteString] = {
       val values = in.get(key)
       values match {
-        case Some(values) => values
+        case Some(values) => normalize(values)
         case None => Seq()
       }
     }
-  
-    /** 
-     * Normalize query parameters in order to accept both ways to represent
-     * lists: ?list=item1,item2 and ?list=item1&list=item2 
-     */
-    def normalize(in: Seq[String]): Seq[ByteString] = {
-      in.foldLeft(Seq[ByteString]()){ _ ++ _.split(",").map(ByteString(_)) }
-    }
 
     /**
-     * TODO: Create filter map outside the actual filter in order to repeat
-     * as few operations as possible.
+     * Create a list of query values to be applied by the filter function.
+     * They are currently mapped by position in the list
      */
+    def getFilterList(
+      in: Request[AnyContent],
+      keys: List[String] = keywords): List[Seq[ByteString]] = {
+        keys.map(getValues(_, in.queryString))
+    }
+
+    val filterList = getFilterList(request, keywords)
 
     /**
      * Filter function to filter stream by query parameters
      */
-    def myFilter(in: List[ByteString], req: Request[AnyContent]) = {
-      val params = req.queryString
-      val values = getValues(params, "measurements")
-      normalize(values).foldLeft(false){ _ || in(0) == _}
+    def myFilter(in: List[ByteString], query: List[Seq[ByteString]]) = {
+      query(0).foldLeft(false) { _  || in(0) == _} &&
+      query(1).foldLeft(false) { _  || in(1) == _} &&
+      query(2).foldLeft(false) { _  || in(2) == _} &&
+      query(3).foldLeft(false) { _  || in(3) == _}
     }
 
     /**
      * Set request before passing function to flow
      */
-    def filterFunction(in: List[ByteString]) = myFilter(in: List[ByteString], request)
+    def filterFunction(in: List[ByteString]) = 
+      myFilter(in: List[ByteString], filterList)
 
     /**
      * Format CSV output stream
@@ -77,6 +91,9 @@ class StreamController @Inject(
       lst.reduce(_ ++ ByteString(",") ++ _) ++ ByteString("\n") 
     }
 
+    /**
+     * Build flow
+     */
     val source = FileIO.fromPath(Paths.get("10002070.csv"))
       .via(CsvParsing.lineScanner())
       .filter(filterFunction)
