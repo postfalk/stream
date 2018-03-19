@@ -71,17 +71,20 @@ class StreamController @Inject(
     /**
      * Filter function to filter stream by query parameters
      */
-    def myFilter(in: List[ByteString], query: List[Seq[ByteString]]) = {
-      query(0).foldLeft(false) { _  || in(0) == _} &&
-      query(1).foldLeft(false) { _  || in(1) == _} &&
-      query(2).foldLeft(false) { _  || in(2) == _} &&
-      query(3).foldLeft(false) { _  || in(3) == _}
+    def myFilter(
+      in: List[ByteString], 
+      query: List[Seq[ByteString]]): Boolean = 
+    { 
+      (query(0).isEmpty || query(0).foldLeft(false) { _  || in(0) == _}) &&
+      (query(1).isEmpty || query(1).foldLeft(false) { _  || in(1) == _}) &&
+      (query(2).isEmpty || query(2).foldLeft(false) { _  || in(2) == _}) &&
+      (query(3).isEmpty || query(3).foldLeft(false) { _  || in(3) == _})
     }
 
     /**
      * Set request before passing function to flow
      */
-    def filterFunction(in: List[ByteString]) = 
+    def filterFunction(in: List[ByteString]): Boolean = 
       myFilter(in: List[ByteString], filterList)
 
     /**
@@ -92,13 +95,16 @@ class StreamController @Inject(
     }
 
     /**
-     * Build flow
+     * Build flow as source
      */
     val source = FileIO.fromPath(Paths.get("10002070.csv"))
       .via(CsvParsing.lineScanner())
       .filter(filterFunction)
       .map(formatCsvLine)
 
+    /**
+     * Sink flow to chunked HTTP response
+     */
     Ok.chunked(source).as("text/plain")
   }
 
