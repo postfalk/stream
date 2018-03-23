@@ -44,16 +44,17 @@ class StreamControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injecti
     "filter properly" in {
       val controller = new StreamController(stubControllerComponents())
       val query = List(
-        Seq(ByteString("min")), Seq[ByteString](), Seq[ByteString](), 
-        Seq[ByteString]()
-      )
-      var in = "min, estimated, 1980, 2, 1.0"
+        Seq(ByteString("min")), 
+        Seq(ByteString("estimated")), 
+        Seq[ByteString](),
+        Seq[ByteString]())
+      var in = "min,estimated,1980,2,1.0"
         .split(",").map(ByteString(_)).toList
       controller.myFilter(in, query) must be (true)
-      in = "max, estimated, 1980, 2, 1.0"
+      in = "max,estimated,1980,2,1.0"
         .split(",").map(ByteString(_)).toList
       controller.myFilter(in, query) must be (false)
-    }
+      }
 
   }
 }

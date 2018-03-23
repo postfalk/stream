@@ -2,6 +2,7 @@ package controllers
 
 import javax.inject._
 import java.nio.file.{Files, Paths} 
+import scala.collection.immutable.Range
 
 import play.api._
 import play.api.mvc._
@@ -28,10 +29,12 @@ class StreamController @Inject(
     in: List[ByteString], 
     query: List[Seq[ByteString]]): Boolean =
   {
-    (query(0).isEmpty || query(0).foldLeft(false) { _  || in(0) == _}) &&
-    (query(1).isEmpty || query(1).foldLeft(false) { _  || in(1) == _}) &&
-    (query(2).isEmpty || query(2).foldLeft(false) { _  || in(2) == _}) &&
-    (query(3).isEmpty || query(3).foldLeft(false) { _  || in(3) == _})
+    (0 until 4).foldLeft(true) { 
+      (agg, i) => {
+        if (agg == false) {return false}
+        agg && (query(i).isEmpty || query(i).foldLeft(false) { _ || in(i) == _ })
+      }
+    }
   }
 
   /** 
@@ -90,7 +93,7 @@ class StreamController @Inject(
     val filterList = getFilterList(request, keywords)
 
     /**
-     * Set request before passing function to flow
+     * Set query before passing function to flow
       */
     def filterFunction(in: List[ByteString]): Boolean = 
       myFilter(in: List[ByteString], filterList)
