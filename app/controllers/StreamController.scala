@@ -19,7 +19,7 @@ import akka.util._
 import akka.stream.alpakka.csv.scaladsl.{CsvParsing, CsvToMap}
 
 /**
- * Simple streaming example  
+ * Stream CSV data according to requested stream segments and filters
  */
 class StreamController @Inject(
   ) (cc: ControllerComponents) extends AbstractController(cc) {
@@ -41,8 +41,8 @@ class StreamController @Inject(
     }
   }
 
-  /** 
-   * 1. Normalize query parameters in order to accept both ways to represent
+  /**
+   * 1. Normalize query parameters to accept different ways to represent
    * lists in urls: ?list=item1,item2 and ?list=item1&list=item2
    * 2. Set default values if query parameter is empty
    * 3. Convert to ByteString in accordance with Akka
@@ -52,9 +52,12 @@ class StreamController @Inject(
   }
 
   /**
-   * Extract query parameters from request by keyword for further processing
+   * Extract query parameters from requests by keyword for further processing
    */
-  def getValues(key: String, in: Map[String, Seq[String]]) : Seq[ByteString] = {
+  def getValues(
+    key: String, 
+    in: Map[String, Seq[String]]
+  ) : Seq[ByteString] = {
     val values = in.get(key)
     values match {
       case Some(values) => normalize(values)
@@ -63,8 +66,8 @@ class StreamController @Inject(
   }
 
   /**
-   * Create a list of query values to be applied by the filter function.
-   * They are currently mapped by position in the list
+   * Create a list of query values to be applied by the filter function. Query 
+   * values are mapped by list position.
    */
   def getFilterList(
     in: Request[AnyContent],
@@ -80,8 +83,9 @@ class StreamController @Inject(
   }
 
   /**
-   * A play view that streams CSV data from file to download
-   * and applying filters.
+   * A play view that streams CSV data from file to download and applying 
+   * filters.
+   * TODO: decide in what scope helper functions should be placed.
    */
   def chunkedFromSource() = Action {
 
@@ -90,8 +94,7 @@ class StreamController @Inject(
     implicit val materializer = ActorMaterializer() 
 
     /**
-     * Keywords that can be used for filtering, they will be matched by 
-     * position
+     * Keywords used for filtering, they will be matched by position in list
      */
     val keywords = List(
       "measurements", "variables", "years", "months")
@@ -105,31 +108,37 @@ class StreamController @Inject(
       myFilter(in: List[ByteString], filterList)
 
     /**
-     * Build flow as source
+     * Source that takes files from parameters
      */
-    val source = FileIO.fromPath(Paths.get("10002070.csv"))
+    val parameterSource = FileIO.fromPath(Paths.get("10002070.csv"))
       .via(CsvParsing.lineScanner())
-      .filter(filterFunction)
-      .map(formatCsvLine)
 
-    val src = GraphDSL.create() { 
+    /**
+     *  Build Source-shaped graph to pass to Ok.chunked
+     */
+    val sourceGraph = GraphDSL.create() { 
       implicit builder: GraphDSL.Builder[NotUsed] => 
 
         import GraphDSL.Implicits._
-        
-        val sink = Sink.foreach[ByteString](println(_))
-        val f = Flow[ByteString].map((item) => { item  })
-        val stream = source ~> f
-    
+
+        val f = Flow[List[ByteString]].map((item) => { item  })
+        val stream = parameterSource ~> f
+
       SourceShape(stream.outlet)
     }
 
-    val new_source = Source.fromGraph(src)
+    /**
+     * Apply filters and format as csv
+     */
+    val source = Source.fromGraph(sourceGraph)
+      .filter(filterFunction)
+      .map(formatCsvLine)
 
     /**
-     * Sink flow to chunked HTTP response
+     * Sink flow to chunked HTTP response using Play framework
+     * TODO: We probably should switch to Akka http eventually
      */
-    Ok.chunked(new_source).as("text/plain")
+    Ok.chunked(source).as("text/plain")
   }
 
 }
