@@ -33,9 +33,9 @@ class StreamControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injecti
         .apply(FakeRequest(GET, "/stream/"))
       val content = contentAsString(res)
       val lines = content.split("\n")
-      lines.length must equal (9504)
+      lines.length must equal (19008)
       lines.foreach((item) => { 
-        item.split(",").length must equal (5)
+        item.split(",").length must equal (6)
       })
     }
   }
@@ -48,10 +48,10 @@ class StreamControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injecti
         Seq(ByteString("estimated")), 
         Seq[ByteString](),
         Seq[ByteString]())
-      var in = "min,estimated,1980,2,1.0"
+      var in = "1000,min,estimated,1980,2,1.0"
         .split(",").map(ByteString(_)).toList
       controller.myFilter(in, query) must be (true)
-      in = "max,estimated,1980,2,1.0"
+      in = "1000,max,estimated,1980,2,1.0"
         .split(",").map(ByteString(_)).toList
       controller.myFilter(in, query) must be (false)
       }

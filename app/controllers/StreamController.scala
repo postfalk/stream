@@ -1,7 +1,7 @@
 package controllers
 
 import javax.inject._
-import java.nio.file.{Files, Paths} 
+import java.nio.file.{Files, Paths}
 import scala.collection.immutable.Range
 
 import play.api._
@@ -28,15 +28,15 @@ class StreamController @Inject(
    * Filter function to filter stream by query parameters
    */
   def myFilter(
-    in: List[ByteString], 
+    in: List[ByteString],
     query: List[Seq[ByteString]]): Boolean =
   {
-    (0 until 4).foldLeft(true) { 
+    (0 until 4).foldLeft(true) {
       (agg, i) => {
         // exit early once agg false, not sure whether that makes sense
         if (agg == false) { return false }
-        agg && 
-          (query(i).isEmpty || query(i).foldLeft(false) { _ || in(i) == _ })
+        agg &&
+          (query(i).isEmpty || query(i).foldLeft(false) { _ || in(i+1) == _ })
       }
     }
   }
@@ -55,7 +55,7 @@ class StreamController @Inject(
    * Extract query parameters from requests by keyword for further processing
    */
   def getValues(
-    key: String, 
+    key: String,
     in: Map[String, Seq[String]]
   ) : Seq[ByteString] = {
     val values = in.get(key)
@@ -66,7 +66,7 @@ class StreamController @Inject(
   }
 
   /**
-   * Create a list of query values to be applied by the filter function. Query 
+   * Create a list of query values to be applied by the filter function. Query
    * values are mapped by list position.
    */
   def getFilterList(
@@ -78,8 +78,8 @@ class StreamController @Inject(
   /**
    * Format CSV output stream
    */
-  def formatCsvLine(lst: List[ByteString]): ByteString = { 
-    lst.reduce(_ ++ ByteString(",") ++ _) ++ ByteString("\n") 
+  def formatCsvLine(lst: List[ByteString]): ByteString = {
+    lst.reduce(_ ++ ByteString(",") ++ _) ++ ByteString("\n")
   }
 
   /**
@@ -91,7 +91,7 @@ class StreamController @Inject(
 
     implicit request: Request[AnyContent] =>
     implicit val system = ActorSystem("Test")
-    implicit val materializer = ActorMaterializer() 
+    implicit val materializer = ActorMaterializer()
 
     /**
      * Keywords used for filtering, they will be matched by position in list
@@ -103,42 +103,28 @@ class StreamController @Inject(
 
     /**
      * Set query before passing function to flow
-      */
-    def filterFunction(in: List[ByteString]): Boolean = 
+     */
+    def filterFunction(in: List[ByteString]): Boolean =
       myFilter(in: List[ByteString], filterList)
 
     /**
-     * Source that takes files from parameters
+     *  construct the source
      */
-    val parameterSource = FileIO.fromPath(Paths.get("10002070.csv"))
-      .via(CsvParsing.lineScanner())
-
-    /**
-     *  Build Source-shaped graph to pass to Ok.chunked
-     */
-    val sourceGraph = GraphDSL.create() { 
-      implicit builder: GraphDSL.Builder[NotUsed] => 
-
-        import GraphDSL.Implicits._
-
-        val f = Flow[List[ByteString]].map((item) => { item  })
-        val stream = parameterSource ~> f
-
-      SourceShape(stream.outlet)
-    }
-
-    /**
-     * Apply filters and format as csv
-     */
-    val source = Source.fromGraph(sourceGraph)
+    val source = Source(List("10002070", "10000042"))
+      .flatMapConcat{
+        comid =>
+        FileIO.fromPath(Paths.get(comid + ".csv"))
+          .via(CsvParsing.lineScanner())
+          .map(List(ByteString(comid)) ++ _)
+      }
       .filter(filterFunction)
       .map(formatCsvLine)
 
     /**
      * Sink flow to chunked HTTP response using Play framework
-     * TODO: We probably should switch to Akka http eventually
+     * TODO: Switch to Akka http eventually
      */
-    Ok.chunked(source).as("text/plain")
+    Ok.chunked(source) as "text/plain"
   }
 
 }
