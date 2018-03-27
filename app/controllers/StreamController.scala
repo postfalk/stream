@@ -121,6 +121,12 @@ class StreamController @Inject(
       .flatMapConcat{
         comid =>
         FileIO.fromPath(Paths.get(comid + ".csv"))
+          /** Recover catches error if file does not exist and passes an empty
+           *  ByteString instead down the processing pipeline. It would be 
+           *  nicer to catch a more specific error. See discussion:
+           *  https://github.com/akka/akka/issues/24512
+           */
+          .recover({ case _: IllegalArgumentException => ByteString() })
           .via(CsvParsing.lineScanner())
           .map(List(ByteString(comid)) ++ _)
       }
