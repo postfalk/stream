@@ -110,21 +110,45 @@ class StreamController @Inject(
     /**
      * Create list from query parameters and convert to immutable list
      */
-    val list = getValues("segments", request.queryString)
+    val query = getValues("segments", request.queryString)
+
+    val list = query
       .map(_.utf8String)
       .toList
 
     /**
+     * List stream source from index.csv file
+     * TODO: Test whether DirectoryIO from Alpakka can do this job
+     * effectively.
+     */
+    val indexSource = FileIO.fromPath(Paths.get("index.csv"))
+      .via(CsvParsing.lineScanner()).map(_(0).utf8String)
+
+    val graph = GraphDSL.create() {
+      implicit builder =>
+      import GraphDSL.Implicits._
+      val in1 = Source(list)
+      val in2 = indexSource
+      val merge = builder.add(Merge[String](2))
+
+      in1 ~> merge.in(0)
+      in2.filter(in => query == List()) ~> merge.in(1)
+
+      SourceShape(merge.out)
+    }
+
+    val combinedSource = Source.fromGraph(graph)
+
+    /**
      *  construct the source
      */
-    val source = Source(list)
+    val source = combinedSource
       .flatMapConcat{
         comid =>
-        FileIO.fromPath(Paths.get(comid + ".csv"))
-          /** Recover catches error if file does not exist and passes an empty
-           *  ByteString instead down the processing pipeline. It would be 
-           *  nicer to catch a more specific error. See discussion:
-           *  https://github.com/akka/akka/issues/24512
+          FileIO.fromPath(Paths.get(comid + ".csv"))
+          /** Recover catches file-does-not-exist errors and passes an empty
+           *  ByteString to downstream stages instead. Would be nicer to catch
+           *  more specific error. See: https://github.com/akka/akka/issues/24512
            */
           .recover({ case _: IllegalArgumentException => ByteString() })
           .via(CsvParsing.lineScanner())
