@@ -1,5 +1,6 @@
 logs
 target
+dump
 /.idea
 /.idea_modules
 /.classpath

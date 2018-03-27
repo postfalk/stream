@@ -107,37 +107,36 @@ class StreamController @Inject(
     def filterFunction(in: List[ByteString]): Boolean =
       myFilter(in: List[ByteString], filterList)
 
-    /**
-     * Create list from query parameters and convert to immutable list
-     */
-    val query = getValues("segments", request.queryString)
-
-    val list = query
-      .map(_.utf8String)
-      .toList
-
-    /**
-     * List stream source from index.csv file
-     * TODO: Test whether DirectoryIO from Alpakka can do this job
-     * effectively.
-     */
-    val indexSource = FileIO.fromPath(Paths.get("index.csv"))
-      .via(CsvParsing.lineScanner()).map(_(0).utf8String)
-
-    val graph = GraphDSL.create() {
+    val combinedSource = Source.fromGraph(GraphDSL.create() {
       implicit builder =>
       import GraphDSL.Implicits._
+
+      /**
+       * Create list from query parameters and convert to immutable list
+       */
+      val list = getValues("segments", request.queryString)
+        .map(_.utf8String)
+        .toList
+
       val in1 = Source(list)
-      val in2 = indexSource
+      /**
+       * List stream source from index.csv file, when no specific files are
+       * requested.
+       * TODO: Test whether DirectoryIO from Alpakka can do this job
+       * effectively.
+       */
+      val in2 = FileIO.fromPath(Paths.get("dump/index.csv"))
+        .via(CsvParsing.lineScanner()).map(_(0).utf8String)
       val merge = builder.add(Merge[String](2))
 
+      /**
+       *  Connect graph: in2 only used if list from request is empty
+       */
       in1 ~> merge.in(0)
-      in2.filter(in => query == List()) ~> merge.in(1)
+      in2.filter(_ => list.isEmpty) ~> merge.in(1)
 
       SourceShape(merge.out)
-    }
-
-    val combinedSource = Source.fromGraph(graph)
+    })
 
     /**
      *  construct the source
@@ -145,7 +144,7 @@ class StreamController @Inject(
     val source = combinedSource
       .flatMapConcat{
         comid =>
-          FileIO.fromPath(Paths.get(comid + ".csv"))
+          FileIO.fromPath(Paths.get("dump/" + comid + ".csv"))
           /** Recover catches file-does-not-exist errors and passes an empty
            *  ByteString to downstream stages instead. Would be nicer to catch
            *  more specific error. See: https://github.com/akka/akka/issues/24512
@@ -161,7 +160,7 @@ class StreamController @Inject(
      * Sink flow to chunked HTTP response using Play framework
      * TODO: Switch to Akka http eventually
      */
-    Ok.chunked(source) as "text/plain"
+    Ok.chunked(source) as "text/csv"
   }
 
 }
