@@ -30,10 +30,10 @@ class StreamControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injecti
     "should be csv" in {
       val controller = new StreamController(stubControllerComponents())
       val res = controller.chunkedFromSource()
-        .apply(FakeRequest(GET, "/stream/"))
+        .apply(FakeRequest(GET, "/stream/?segments=10000042"))
       val content = contentAsString(res)
       val lines = content.split("\n")
-      lines.length must equal (19008)
+      lines.length must equal (9504)
       lines.foreach((item) => { 
         item.split(",").length must equal (6)
       })

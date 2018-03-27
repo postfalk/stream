@@ -48,7 +48,7 @@ class StreamController @Inject(
    * 3. Convert to ByteString in accordance with Akka
    */
   def normalize(in: Seq[String]): Seq[ByteString] = {
-    in.foldLeft(Seq[ByteString]()) { _ ++ _.split(",").map(ByteString(_)) }
+    in.foldLeft(List[ByteString]()) { _ ++ _.split(",").map(ByteString(_)) }
   }
 
   /**
@@ -61,7 +61,7 @@ class StreamController @Inject(
     val values = in.get(key)
     values match {
       case Some(values) => normalize(values)
-      case None => Seq()
+      case None => List()
     }
   }
 
@@ -108,9 +108,16 @@ class StreamController @Inject(
       myFilter(in: List[ByteString], filterList)
 
     /**
+     * Create list from query parameters and convert to immutable list
+     */
+    val list = getValues("segments", request.queryString)
+      .map(_.utf8String)
+      .toList
+
+    /**
      *  construct the source
      */
-    val source = Source(List("10002070", "10000042"))
+    val source = Source(list)
       .flatMapConcat{
         comid =>
         FileIO.fromPath(Paths.get(comid + ".csv"))
