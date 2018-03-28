@@ -2,7 +2,10 @@ package controllers
 
 import javax.inject._
 import java.nio.file.{Files, Paths}
+
 import scala.collection.immutable.Range
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
 
 import play.api._
 import play.api.mvc._
@@ -17,6 +20,7 @@ import akka.stream.scaladsl._
 import akka.util._
 
 import akka.stream.alpakka.csv.scaladsl.{CsvParsing, CsvToMap}
+import akka.stream.alpakka.s3.scaladsl._
 
 /**
  * Stream CSV data according to requested stream segments and filters
@@ -94,6 +98,21 @@ class StreamController @Inject(
     implicit val materializer = ActorMaterializer()
 
     /**
+     * S3 source seems to work, not yet connected to anything
+     */
+    val s3Client = S3Client()
+    val (s3Source: Source[ByteString, NotUsed], metaData) = s3Client
+      .download("unimpaired", "100000042.csv")
+
+
+    // s3Source.to(Sink.foreach(println(_))).run()
+    println(Await.result(metaData, Duration("5 seconds")).contentLength)
+
+    /* FileIO.fromPath(Paths.get("dump/1000042.csv"))
+      .recover({ case _: IllegalArgumentException => ByteString() })
+      .to(Sink.foreach(println("here", _))).run() */
+
+    /**
      * Keywords used for filtering, they will be matched by position in list
      */
     val keywords = List(
@@ -107,7 +126,30 @@ class StreamController @Inject(
     def filterFunction(in: List[ByteString]): Boolean =
       myFilter(in: List[ByteString], filterList)
 
-    val combinedSource = Source.fromGraph(GraphDSL.create() {
+    /**
+     *  construct the source
+     */
+    val flow = Flow[String]
+      .flatMapConcat{
+        comid => {
+          val (s3Source: Source[ByteString, NotUsed], _) = s3Client
+            .download("unimpaired", comid + ".csv")
+          /* FileIO.fromPath(Paths.get("dump/" + comid + ".csv")) */
+          /** Recover catches file-does-not-exist errors and passes an empty
+           *  ByteString to downstream stages instead. Would be nicer to catch
+           *  more specific error. See: https://github.com/akka/akka/issues/24512
+           */
+           /* .recover({ case _: IllegalArgumentException => ByteString() }) */
+          s3Source
+            .via(CsvParsing.lineScanner())
+            .map(List(ByteString(comid)) ++ _)
+            //* .map((value) => {println(value); value}) *//
+        }
+      }
+      .filter(filterFunction)
+      .map(formatCsvLine)
+
+    val source = Source.fromGraph(GraphDSL.create() {
       implicit builder =>
       import GraphDSL.Implicits._
 
@@ -127,34 +169,17 @@ class StreamController @Inject(
        */
       val in2 = FileIO.fromPath(Paths.get("dump/index.csv"))
         .via(CsvParsing.lineScanner()).map(_(0).utf8String)
-      val merge = builder.add(Merge[String](2))
+      val merge = builder.add(Merge[ByteString](2))
+      /* val bcast = builder.add(Broadcast[String](2)) */
 
       /**
        *  Connect graph: in2 only used if list from request is empty
        */
-      in1 ~> merge.in(0)
-      in2.filter(_ => list.isEmpty) ~> merge.in(1)
+      in1 ~> flow ~> merge.in(0) 
+      in2.filter(_ => list.isEmpty) ~> flow ~> merge.in(1)
 
       SourceShape(merge.out)
     })
-
-    /**
-     *  construct the source
-     */
-    val source = combinedSource
-      .flatMapConcat{
-        comid =>
-          FileIO.fromPath(Paths.get("dump/" + comid + ".csv"))
-          /** Recover catches file-does-not-exist errors and passes an empty
-           *  ByteString to downstream stages instead. Would be nicer to catch
-           *  more specific error. See: https://github.com/akka/akka/issues/24512
-           */
-          .recover({ case _: IllegalArgumentException => ByteString() })
-          .via(CsvParsing.lineScanner())
-          .map(List(ByteString(comid)) ++ _)
-      }
-      .filter(filterFunction)
-      .map(formatCsvLine)
 
     /**
      * Sink flow to chunked HTTP response using Play framework
