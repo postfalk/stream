@@ -1,7 +1,7 @@
 package controllers
 
 import javax.inject._
-import java.nio.file.{Files, Paths}
+import java.nio.file.{Files, Paths, NoSuchFileException}
 
 import scala.collection.immutable.Range
 import scala.concurrent.Await
@@ -95,18 +95,24 @@ class StreamController @Inject(
 
     implicit request: Request[AnyContent] =>
     implicit val system = ActorSystem("Test")
-    implicit val materializer = ActorMaterializer()
+    implicit val materializer = ActorMaterializer(
+      ActorMaterializerSettings(system)
+        .withInputBuffer(initialSize=1, maxSize=1)
+        .withOutputBurstLimit(1)
+        .withSyncProcessingLimit(8)
+    )
 
     /**
      * S3 source seems to work, not yet connected to anything
      */
-    val s3Client = S3Client()
+    /* val s3Client = S3Client()
     val (s3Source: Source[ByteString, NotUsed], metaData) = s3Client
       .download("unimpaired", "100000042.csv")
+    */
 
 
     // s3Source.to(Sink.foreach(println(_))).run()
-    println(Await.result(metaData, Duration("5 seconds")).contentLength)
+    /* println(Await.result(metaData, Duration("5 seconds")).contentLength) */
 
     /* FileIO.fromPath(Paths.get("dump/1000042.csv"))
       .recover({ case _: IllegalArgumentException => ByteString() })
@@ -130,24 +136,22 @@ class StreamController @Inject(
      *  construct the source
      */
     val flow = Flow[String]
-      .flatMapConcat{
-        comid => {
-          val (s3Source: Source[ByteString, NotUsed], _) = s3Client
-            .download("unimpaired", comid + ".csv")
-          /* FileIO.fromPath(Paths.get("dump/" + comid + ".csv")) */
+      .flatMapConcat({
+        comid => 
+          /* val (s3Source: Source[ByteString, NotUsed], _) = s3Client
+            .download("unimpaired", comid + ".csv") */
+          FileIO.fromPath(Paths.get("dump/" + comid + ".csv"))
           /** Recover catches file-does-not-exist errors and passes an empty
-           *  ByteString to downstream stages instead. Would be nicer to catch
-           *  more specific error. See: https://github.com/akka/akka/issues/24512
+           *  ByteString to downstream stages instead.
            */
-           /* .recover({ case _: IllegalArgumentException => ByteString() }) */
-          s3Source
-            .via(CsvParsing.lineScanner())
+            .recover({ case _: NoSuchFileException => ByteString()})
+          /* s3Source */
+            .via(CsvParsing.lineScanner())  // this step makes it very slow
             .map(List(ByteString(comid)) ++ _)
-            //* .map((value) => {println(value); value}) *//
-        }
-      }
-      .filter(filterFunction)
-      .map(formatCsvLine)
+            .filter(filterFunction)
+            .map(formatCsvLine)
+            .fold(ByteString())(_ ++ _)
+        })
 
     val source = Source.fromGraph(GraphDSL.create() {
       implicit builder =>
@@ -170,16 +174,27 @@ class StreamController @Inject(
       val in2 = FileIO.fromPath(Paths.get("dump/index.csv"))
         .via(CsvParsing.lineScanner()).map(_(0).utf8String)
       val merge = builder.add(Merge[ByteString](2))
-      /* val bcast = builder.add(Broadcast[String](2)) */
+      // val bcast = builder.add(Broadcast[String](2)) 
 
       /**
        *  Connect graph: in2 only used if list from request is empty
        */
-      in1 ~> flow ~> merge.in(0) 
+      in1 ~> flow ~> merge.in(0)
       in2.filter(_ => list.isEmpty) ~> flow ~> merge.in(1)
 
       SourceShape(merge.out)
     })
+
+    /* val experimentalSource = FileIO.fromPath(Paths.get("dump/index.csv"))
+        .via(CsvParsing.lineScanner()).map(_(0).utf8String)
+        .flatMapConcat(comid => {
+          FileIO.fromPath(Paths.get("dump/" + comid + ".csv"))
+            .recover({ case _: NoSuchFileException => ByteString() })
+            .via(Framing.delimiter(ByteString("\n"), 256, allowTruncation=true))
+            .map(ByteString(comid + ",") ++ _ ++ ByteString("\n"))
+        })
+        // .filter(filterFunction)
+        // .map(formatCsvLine) */
 
     /**
      * Sink flow to chunked HTTP response using Play framework
