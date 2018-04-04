@@ -1,26 +1,51 @@
 package controllers
 
-import javax.inject._
+import javax.inject.Inject
 import java.nio.file.{Files, Paths, NoSuchFileException}
 
-import scala.collection.immutable.Range
-import scala.concurrent.Await
+// import scala.collection.immutable.Range
+// import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
-import play.api._
-import play.api.mvc._
-import play.api.http._
-import play.api.libs.iteratee._
+// import org.apache.commons.csv.CSVFormat
+
+// import play.api._
+import play.api.mvc.{
+  Action, Request, AnyContent, AbstractController, ControllerComponents}
+// import play.api.http._
+// import play.api.libs.iteratee._
 
 import akka.NotUsed
+import akka.event.Logging
 import akka.actor.ActorSystem
-import akka.stream._
-import akka.stream.stage._
-import akka.stream.scaladsl._
-import akka.util._
-
+import akka.stream.stage.{
+  GraphStage, GraphStageLogic, InHandler, OutHandler}
+import akka.stream.{
+  Attributes, Inlet, Outlet, SourceShape, FlowShape}
+import akka.stream.scaladsl.{
+  FileIO, Source, Sink, GraphDSL, Merge, Flow}
+import akka.util.ByteString
 import akka.stream.alpakka.csv.scaladsl.{CsvParsing, CsvToMap}
-import akka.stream.alpakka.s3.scaladsl._
+// import akka.stream.alpakka.s3.scaladsl._
+
+
+/** experiment with custom flow stage for in-memory processing of chunks
+ */
+class MyCSVStage extends GraphStage[FlowShape[ByteString, ByteString]] {
+
+  private val in = Inlet[ByteString](Logging.simpleName(this) + ".in")
+  private val out = Outlet[ByteString](Logging.simpleName(this) + ".out")
+  override val shape = FlowShape(in, out)
+
+  override def createLogic(inheritedAttributes: Attributes) = 
+    new GraphStageLogic(shape) with InHandler with OutHandler {
+
+      def onPush(): Unit = {}
+
+      def onPull(): Unit = {}
+    }
+}
+
 
 /**
  * Stream CSV data according to requested stream segments and filters
@@ -94,13 +119,12 @@ class StreamController @Inject(
   def chunkedFromSource() = Action {
 
     implicit request: Request[AnyContent] =>
-    implicit val system = ActorSystem("Test")
+    /*implicit val system = ActorSystem("Test")
     implicit val materializer = ActorMaterializer(
       ActorMaterializerSettings(system)
-        .withInputBuffer(initialSize=1, maxSize=1)
-        .withOutputBurstLimit(1)
-        .withSyncProcessingLimit(8)
-    )
+        .withInputBuffer(initialSize=1, maxSize=128)
+        .withSyncProcessingLimit(4)
+    )*/
 
     /**
      * S3 source seems to work, not yet connected to anything
@@ -109,7 +133,6 @@ class StreamController @Inject(
     val (s3Source: Source[ByteString, NotUsed], metaData) = s3Client
       .download("unimpaired", "100000042.csv")
     */
-
 
     // s3Source.to(Sink.foreach(println(_))).run()
     /* println(Await.result(metaData, Duration("5 seconds")).contentLength) */
@@ -137,21 +160,20 @@ class StreamController @Inject(
      */
     val flow = Flow[String]
       .flatMapConcat({
-        comid => 
+        comid =>
           /* val (s3Source: Source[ByteString, NotUsed], _) = s3Client
             .download("unimpaired", comid + ".csv") */
           FileIO.fromPath(Paths.get("dump/" + comid + ".csv"))
           /** Recover catches file-does-not-exist errors and passes an empty
            *  ByteString to downstream stages instead.
            */
-            .recover({ case _: NoSuchFileException => ByteString()})
+            .recover({ case _: NoSuchFileException => ByteString() })
           /* s3Source */
-            .via(CsvParsing.lineScanner())  // this step makes it very slow
+            .via(CsvParsing.lineScanner())
             .map(List(ByteString(comid)) ++ _)
             .filter(filterFunction)
             .map(formatCsvLine)
-            .fold(ByteString())(_ ++ _)
-        })
+      })
 
     val source = Source.fromGraph(GraphDSL.create() {
       implicit builder =>

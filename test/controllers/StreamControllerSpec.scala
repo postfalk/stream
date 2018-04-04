@@ -24,10 +24,10 @@ class StreamControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injecti
       val res = controller.chunkedFromSource()
         .apply(FakeRequest(GET, "/stream/"))
       status(res) mustBe OK
-      contentType(res) mustBe Some("text/plain")
+      contentType(res) mustBe Some("text/csv")
     }
 
-    "should be csv" in {
+    "be csv" in {
       val controller = new StreamController(stubControllerComponents())
       val res = controller.chunkedFromSource()
         .apply(FakeRequest(GET, "/stream/?segments=10000042"))
