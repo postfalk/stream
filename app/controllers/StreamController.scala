@@ -40,10 +40,26 @@ class MyCSVStage extends GraphStage[FlowShape[ByteString, ByteString]] {
   override def createLogic(inheritedAttributes: Attributes) = 
     new GraphStageLogic(shape) with InHandler with OutHandler {
 
-      def onPush(): Unit = {}
+      setHandlers(in, out, this)
+      var leftover = ByteString()
 
-      def onPull(): Unit = {}
-    }
+      override def onPush(): Unit = {
+        val elem = leftover ++ grab(in)
+        val endPosition = elem.lastIndexOf(10)
+        val send = elem.slice(0, endPosition+1)
+        leftover = elem.slice(endPosition+1, elem.size+1)
+        push(out, send)
+      }
+
+      override def onPull(): Unit = {
+        pull(in)
+      }
+
+      override def onUpstreamFinish(): Unit = {
+        emit(out, leftover)
+        completeStage()
+      }
+  }
 }
 
 
@@ -155,11 +171,14 @@ class StreamController @Inject(
     def filterFunction(in: List[ByteString]): Boolean =
       myFilter(in: List[ByteString], filterList)
 
+
     /**
      *  construct the source
      */
     val flow = Flow[String]
       .flatMapConcat({
+
+        val csvPieces = Flow.fromGraph(new MyCSVStage())
         comid =>
           /* val (s3Source: Source[ByteString, NotUsed], _) = s3Client
             .download("unimpaired", comid + ".csv") */
@@ -169,6 +188,7 @@ class StreamController @Inject(
            */
             .recover({ case _: NoSuchFileException => ByteString() })
           /* s3Source */
+            .via(csvPieces)
             .via(CsvParsing.lineScanner())
             .map(List(ByteString(comid)) ++ _)
             .filter(filterFunction)
