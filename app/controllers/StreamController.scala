@@ -175,10 +175,10 @@ class StreamController @Inject(
     /**
      *  construct the source
      */
-    val flow = Flow[String]
+    val fileFlow = Flow[String]
       .flatMapConcat({
 
-        val csvPieces = Flow.fromGraph(new MyCSVStage())
+        // val csvPieces = Flow.fromGraph(new MyCSVStage())
         comid =>
           /* val (s3Source: Source[ByteString, NotUsed], _) = s3Client
             .download("unimpaired", comid + ".csv") */
@@ -188,12 +188,16 @@ class StreamController @Inject(
            */
             .recover({ case _: NoSuchFileException => ByteString() })
           /* s3Source */
-            .via(csvPieces)
-            .via(CsvParsing.lineScanner())
-            .map(List(ByteString(comid)) ++ _)
-            .filter(filterFunction)
-            .map(formatCsvLine)
+            // .via(csvPieces)
+            // .via(CsvParsing.lineScanner())
+            // .filter(filterFunction)
+            // .map(formatCsvLine)
       })
+
+    val filterFlow = Flow[ByteString]
+      .via(CsvParsing.lineScanner())
+      .filter(filterFunction)
+      .map(formatCsvLine)
 
     val source = Source.fromGraph(GraphDSL.create() {
       implicit builder =>
@@ -221,8 +225,8 @@ class StreamController @Inject(
       /**
        *  Connect graph: in2 only used if list from request is empty
        */
-      in1 ~> flow ~> merge.in(0)
-      in2.filter(_ => list.isEmpty) ~> flow ~> merge.in(1)
+      in1 ~> fileFlow ~> filterFlow ~> merge.in(0)
+      in2.filter(_ => list.isEmpty) ~> fileFlow ~> filterFlow ~> merge.in(1)
 
       SourceShape(merge.out)
     })
