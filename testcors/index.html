@@ -29,10 +29,12 @@ $(function() {
   var local = "http://localhost:9000"
   var path = "/stream/?segments=10000042"
 
+  var url = production + path
+
   $.ajax({
-    url: local + path
+    url: url
   }).done(
-    function() { alert('Success.') }
+    function() { alert('Success: ' + url) }
   ).fail(
     function() { alert('Potential CORS or network error.') }
   )

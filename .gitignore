@@ -1,6 +1,7 @@
 logs
 target
 dump
+pdump
 /.idea
 /.idea_modules
 /.classpath
