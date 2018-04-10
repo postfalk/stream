@@ -1,20 +1,8 @@
 package controllers
-
 import javax.inject.Inject
-import java.nio.file.{Files, Paths, NoSuchFileException}
-
-// import scala.collection.immutable.Range
-// import scala.concurrent.Await
-import scala.concurrent.duration.Duration
-
-// import org.apache.commons.csv.CSVFormat
-
-// import play.api._
+import java.nio.file.{Paths, NoSuchFileException}
 import play.api.mvc.{
   Action, Request, AnyContent, AbstractController, ControllerComponents}
-// import play.api.http._
-// import play.api.libs.iteratee._
-
 import akka.NotUsed
 import akka.event.Logging
 import akka.actor.ActorSystem
@@ -23,10 +11,9 @@ import akka.stream.stage.{
 import akka.stream.{
   Attributes, Inlet, Outlet, SourceShape, FlowShape}
 import akka.stream.scaladsl.{
-  FileIO, Source, Sink, GraphDSL, Merge, Flow}
+  FileIO, Source, Sink, GraphDSL, Merge, Flow, Partition, Concat}
 import akka.util.ByteString
-import akka.stream.alpakka.csv.scaladsl.{CsvParsing, CsvToMap}
-// import akka.stream.alpakka.s3.scaladsl._
+import akka.stream.alpakka.csv.scaladsl.CsvParsing
 
 
 /** experiment with custom flow stage for in-memory processing of chunks
@@ -135,13 +122,6 @@ class StreamController @Inject(
   def chunkedFromSource() = Action {
 
     implicit request: Request[AnyContent] =>
-    /*implicit val system = ActorSystem("Test")
-    implicit val materializer = ActorMaterializer(
-      ActorMaterializerSettings(system)
-        .withInputBuffer(initialSize=1, maxSize=128)
-        .withSyncProcessingLimit(4)
-    )*/
-
     /**
      * S3 source seems to work, not yet connected to anything
      */
@@ -150,19 +130,15 @@ class StreamController @Inject(
       .download("unimpaired", "100000042.csv")
     */
 
-    // s3Source.to(Sink.foreach(println(_))).run()
-    /* println(Await.result(metaData, Duration("5 seconds")).contentLength) */
-
-    /* FileIO.fromPath(Paths.get("dump/1000042.csv"))
-      .recover({ case _: IllegalArgumentException => ByteString() })
-      .to(Sink.foreach(println("here", _))).run() */
-
     /**
      * Keywords used for filtering, they will be matched by position in list
      */
     val keywords = List(
       "measurements", "variables", "years", "months")
 
+    /**
+     * Create list from query parameters and convert to immutable list
+    */
     val filterList = getFilterList(request, keywords)
 
     /**
@@ -171,13 +147,23 @@ class StreamController @Inject(
     def filterFunction(in: List[ByteString]): Boolean =
       myFilter(in: List[ByteString], filterList)
 
+    val list = getValues("segments", request.queryString)
+      .map(_.utf8String)
+      .toList
 
     /**
-     *  construct the source
+     *  Checks whether filterList is empty or not
+     */
+    def partitionFunction(in:List[Seq[ByteString]]):Boolean = {
+      in.foldLeft(true) {(acc, i) => acc && i.isEmpty }
+    }
+
+    /**
+     *  flow generating a stream of rows from a list of comid's by retrieving 
+     *  files
      */
     val fileFlow = Flow[String]
       .flatMapConcat({
-
         // val csvPieces = Flow.fromGraph(new MyCSVStage())
         comid =>
           /* val (s3Source: Source[ByteString, NotUsed], _) = s3Client
@@ -194,6 +180,9 @@ class StreamController @Inject(
             // .map(formatCsvLine)
       })
 
+    /**
+     *  Flow that filters by query parameters
+     */
     val filterFlow = Flow[ByteString]
       .via(CsvParsing.lineScanner())
       .filter(filterFunction)
@@ -203,50 +192,40 @@ class StreamController @Inject(
       implicit builder =>
       import GraphDSL.Implicits._
 
+      val source1 = Source(list)
       /**
-       * Create list from query parameters and convert to immutable list
-       */
-      val list = getValues("segments", request.queryString)
-        .map(_.utf8String)
-        .toList
-
-      val in1 = Source(list)
-      /**
-       * List stream source from index.csv file, when no specific files are
+       * List stream source from index.csv file, when no specific comids are
        * requested.
-       * TODO: Test whether DirectoryIO from Alpakka can do this job
-       * effectively.
+       * TODO: Test whether DirectoryIO from Alpakka can do this job better
        */
-      val in2 = FileIO.fromPath(Paths.get("dump/index.csv"))
+      val source2 = FileIO.fromPath(Paths.get("dump/index.csv"))
         .via(CsvParsing.lineScanner()).map(_(0).utf8String)
-      val merge = builder.add(Merge[ByteString](2))
-      // val bcast = builder.add(Broadcast[String](2)) 
+      val merge = builder.add(Merge[ByteString](3))
+      val partition = builder.add(Partition[ByteString]
+        (2, in => if (partitionFunction(filterList)) 1 else 0))
 
       /**
-       *  Connect graph: in2 only used if list from request is empty
+       *  Connect graph: source2 only used if list from request is empty
        */
-      in1 ~> fileFlow ~> filterFlow ~> merge.in(0)
-      in2.filter(_ => list.isEmpty) ~> fileFlow ~> filterFlow ~> merge.in(1)
+      source1 ~> fileFlow.async ~> filterFlow ~> merge.in(0)
+      source2.filter(_ => list.isEmpty) ~> fileFlow.async ~> partition.in
+
+      partition.out(0) ~> filterFlow ~> merge.in(1)
+      partition.out(1) ~> merge.in(2)
 
       SourceShape(merge.out)
     })
 
-    /* val experimentalSource = FileIO.fromPath(Paths.get("dump/index.csv"))
-        .via(CsvParsing.lineScanner()).map(_(0).utf8String)
-        .flatMapConcat(comid => {
-          FileIO.fromPath(Paths.get("dump/" + comid + ".csv"))
-            .recover({ case _: NoSuchFileException => ByteString() })
-            .via(Framing.delimiter(ByteString("\n"), 256, allowTruncation=true))
-            .map(ByteString(comid + ",") ++ _ ++ ByteString("\n"))
-        })
-        // .filter(filterFunction)
-        // .map(formatCsvLine) */
-
     /**
-     * Sink flow to chunked HTTP response using Play framework
+     * Add header and sink flow to chunked HTTP response using Play framework
      * TODO: Switch to Akka http eventually
      */
-    Ok.chunked(source) as "text/csv"
+    val header = Source(
+      List(ByteString("comid,measurement,variable,year,month,value\n")))
+    val csvSource = Source
+      .combine(header:Source[ByteString, NotUsed], 
+        source:Source[ByteString, NotUsed])(Concat(_))
+    Ok.chunked(csvSource) as "text/csv"
   }
 
 }
