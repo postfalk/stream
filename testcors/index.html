@@ -23,15 +23,16 @@
   crossorigin="anonymous">
 </script>
 <script>
+
 $(function() {
-  var production = "https://rivers.codefornature.org/api/v2/";
-  var local = "http://localhost:9000/"
-  var path = "stream/?segments=10000042"
+  var production = "https://rivers.codefornature.org/api/v2";
+  var local = "http://localhost:9000"
+  var path = "/stream/?segments=10000042"
 
   $.ajax({
     url: local + path
   }).done(
-    function() { alert('success') }
+    function() { alert('Success.') }
   ).fail(
     function() { alert('Potential CORS or network error.') }
   )
