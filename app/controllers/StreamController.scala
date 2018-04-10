@@ -1,4 +1,5 @@
 package controllers
+
 import javax.inject.Inject
 import java.nio.file.{Paths, NoSuchFileException}
 import play.api.mvc.{
@@ -11,16 +12,17 @@ import akka.stream.stage.{
 import akka.stream.{
   Attributes, Inlet, Outlet, SourceShape, FlowShape}
 import akka.stream.scaladsl.{
-<<<<<<< HEAD
-  FileIO, Source, Sink, GraphDSL, Merge, Flow, Partition}
-=======
   FileIO, Source, Sink, GraphDSL, Merge, Flow, Partition, Concat}
->>>>>>> master
 import akka.util.ByteString
 import akka.stream.alpakka.csv.scaladsl.CsvParsing
 
-
-/** experiment with custom flow stage for in-memory processing of chunks
+/** Experiment with custom flow stage for in-memory processing of chunks
+ *  This stage chunks stream along CSV line boundaries. A chunk would contain
+ *  many CSV lines but ensure that a line break falls on the end of the chunk.
+ *  This stage holds state between chunks (leftover from incoming chunk 
+ *  between last line break and chunk end.)
+ *
+ *  Currently unused but tested. Might come in handy in later improvements.
  */
 class MyCSVStage extends GraphStage[FlowShape[ByteString, ByteString]] {
 
@@ -31,28 +33,27 @@ class MyCSVStage extends GraphStage[FlowShape[ByteString, ByteString]] {
   override def createLogic(inheritedAttributes: Attributes) = 
     new GraphStageLogic(shape) with InHandler with OutHandler {
 
-      setHandlers(in, out, this)
-      var leftover = ByteString()
+    setHandlers(in, out, this)
+    var leftover = ByteString()
 
-      override def onPush(): Unit = {
-        val elem = leftover ++ grab(in)
-        val endPosition = elem.lastIndexOf(10)
-        val send = elem.slice(0, endPosition+1)
-        leftover = elem.slice(endPosition+1, elem.size+1)
-        push(out, send)
-      }
+    override def onPush(): Unit = {
+      val elem = leftover ++ grab(in)
+      val endPosition = elem.lastIndexOf(10)
+      val send = elem.slice(0, endPosition+1)
+      leftover = elem.slice(endPosition+1, elem.size+1)
+      push(out, send)
+    }
 
-      override def onPull(): Unit = {
-        pull(in)
-      }
+    override def onPull(): Unit = {
+      pull(in)
+    }
 
-      override def onUpstreamFinish(): Unit = {
-        emit(out, leftover)
-        completeStage()
-      }
+    override def onUpstreamFinish(): Unit = {
+      emit(out, leftover)
+      completeStage()
+    }
   }
 }
-
 
 /**
  * Stream CSV data according to requested stream segments and filters
