@@ -11,7 +11,11 @@ import akka.stream.stage.{
 import akka.stream.{
   Attributes, Inlet, Outlet, SourceShape, FlowShape}
 import akka.stream.scaladsl.{
+<<<<<<< HEAD
   FileIO, Source, Sink, GraphDSL, Merge, Flow, Partition}
+=======
+  FileIO, Source, Sink, GraphDSL, Merge, Flow, Partition, Concat}
+>>>>>>> master
 import akka.util.ByteString
 import akka.stream.alpakka.csv.scaladsl.CsvParsing
 
@@ -217,10 +221,15 @@ class StreamController @Inject(
     })
 
     /**
-     * Sink flow to chunked HTTP response using Play framework
+     * Add header and sink flow to chunked HTTP response using Play framework
      * TODO: Switch to Akka http eventually
      */
-    Ok.chunked(source) as "text/csv"
+    val header = Source(
+      List(ByteString("comid,measurement,variable,year,month,value\n")))
+    val csvSource = Source
+      .combine(header:Source[ByteString, NotUsed], 
+        source:Source[ByteString, NotUsed])(Concat(_))
+    Ok.chunked(csvSource) as "text/csv"
   }
 
 }
