@@ -70,28 +70,28 @@ class StreamController @Inject(
     in: List[ByteString],
     query: List[Seq[ByteString]]): Boolean =
   {
-    (0 until 4).foldLeft(true) {
+    (0 until 2).foldLeft(true) {
       (agg, i) => {
         // exit early once agg false, not sure whether that makes sense
         if (agg == false) { return false }
         agg &&
-          (query(i).isEmpty || query(i).foldLeft(false) { _ || in(i+1) == _ })
+          (query(i).isEmpty || query(i).foldLeft(false) { _ || in(i+3) == _ })
       }
     }
   }
 
   /**
-   * 1. Normalize query parameters to accept different ways to represent
-   * lists in urls: ?list=item1,item2 and ?list=item1&list=item2
-   * 2. Set default values if query parameter is empty
-   * 3. Convert to ByteString in accordance with Akka
+   * 1. Normalize query parameters to accept different way of representing
+   * lists in urls: ?list=item1,item2 and ?list=item1&list=item2.
+   * 2. Set default values if query parameter is empty.
+   * 3. Convert to ByteString in accordance with Akka.
    */
   def normalize(in: Seq[String]): Seq[ByteString] = {
     in.foldLeft(List[ByteString]()) { _ ++ _.split(",").map(ByteString(_)) }
   }
 
   /**
-   * Extract query parameters from requests by keyword for further processing
+   * Extract query parameters from requests by keyword.
    */
   def getValues(
     key: String, in: Map[String, Seq[String]]
@@ -105,8 +105,8 @@ class StreamController @Inject(
 
   /**
    * Limit values extracted from query parameters by a default list. Extend to
-   * all allowed options if parameter is not present or has no value after
-   * equals sign.
+   * allowed options if parameter is not present or has no value after equals 
+   * sign.
    */
   def getLimitedValues(
     key: String, in: Map[String, Seq[String]], allowed: List[String]
@@ -155,7 +155,7 @@ class StreamController @Inject(
     /**
      * Keywords used for filtering, they will be matched by position in list
      */
-    val keywords = List("measurements", "variables", "years", "months")
+    val keywords = List("years", "months")
 
     /**
      * Create list from query parameters and convert to immutable list
