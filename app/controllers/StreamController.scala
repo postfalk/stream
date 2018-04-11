@@ -16,11 +16,13 @@ import akka.stream.scaladsl.{
 import akka.util.ByteString
 import akka.stream.alpakka.csv.scaladsl.CsvParsing
 
-/** Experiment with custom flow stage for in-memory processing of chunks
- *  This stage chunks stream along CSV line boundaries. A chunk would contain
- *  many CSV lines but ensure that a line break falls on the end of the chunk.
- *  This stage holds state between chunks (leftover from incoming chunk 
- *  between last line break and chunk end.)
+/**
+ *  Experiment with custom flow stage for in-memory processing
+ *  (i.e. filtering) of chunks. This stage chunks stream along CSV line
+ *  boundaries. A chunk would contain many CSV lines but ensure that a line
+ *  break coincident with end of the chunk. This stage holds state between
+ *  chunks (leftover from incoming chunk between last line break and chunk
+ *  end.)
  *
  *  Currently unused but tested. Might come in handy in later improvements.
  */
@@ -56,7 +58,7 @@ class MyCSVStage extends GraphStage[FlowShape[ByteString, ByteString]] {
 }
 
 /**
- * Stream CSV data according to requested stream segments and filters
+ *  Stream CSV data according to requested stream segments and filters
  */
 class StreamController @Inject(
   ) (cc: ControllerComponents) extends AbstractController(cc) {
@@ -92,13 +94,29 @@ class StreamController @Inject(
    * Extract query parameters from requests by keyword for further processing
    */
   def getValues(
-    key: String,
-    in: Map[String, Seq[String]]
+    key: String, in: Map[String, Seq[String]]
   ) : Seq[ByteString] = {
     val values = in.get(key)
     values match {
       case Some(values) => normalize(values)
       case None => List()
+    }
+  }
+
+  /**
+   * Limit values extracted from query parameters by a default list. Extend to
+   * all allowed options if parameter is not present or has no value after
+   * equals sign.
+   */
+  def getLimitedValues(
+    key: String, in: Map[String, Seq[String]], allowed: List[String]
+  ) : Seq[ByteString] = {
+    val ret = getValues(key, in)
+    val opts = allowed.map(ByteString(_))
+    if (ret.isEmpty || ret(0).isEmpty) {
+      opts
+    } else {
+      ret.filter(opts contains _)
     }
   }
 
@@ -127,19 +145,17 @@ class StreamController @Inject(
   def chunkedFromSource() = Action {
 
     implicit request: Request[AnyContent] =>
-    /**
-     * S3 source seems to work, not yet connected to anything
-     */
-    /* val s3Client = S3Client()
-    val (s3Source: Source[ByteString, NotUsed], metaData) = s3Client
-      .download("unimpaired", "100000042.csv")
-    */
 
+    val measurements = getLimitedValues(
+      "measurements", request.queryString,
+      List("max", "min", "mean", "median"))
+    val variables = getLimitedValues(
+      "variables", request.queryString, 
+      List("estimated", "p10", "p90", "observed"))
     /**
      * Keywords used for filtering, they will be matched by position in list
      */
-    val keywords = List(
-      "measurements", "variables", "years", "months")
+    val keywords = List("measurements", "variables", "years", "months")
 
     /**
      * Create list from query parameters and convert to immutable list
@@ -169,20 +185,23 @@ class StreamController @Inject(
      */
     val fileFlow = Flow[String]
       .flatMapConcat({
-        // val csvPieces = Flow.fromGraph(new MyCSVStage())
-        comid =>
-          /* val (s3Source: Source[ByteString, NotUsed], _) = s3Client
-            .download("unimpaired", comid + ".csv") */
-          FileIO.fromPath(Paths.get("dump/" + comid + ".csv"))
-          /** Recover catches file-does-not-exist errors and passes an empty
-           *  ByteString to downstream stages instead.
+        comid => Source(measurements.toList.map(in => List(comid, in.utf8String)))
+      })
+      .flatMapConcat({
+        item => Source(variables.toList.map(in => item ++ List(in.utf8String)))
+      })
+      .flatMapConcat({
+        inValue => 
+          FileIO.fromPath(
+            Paths.get("pdump/", inValue(0),  "/", inValue(1), "/", inValue(2) + ".csv"))
+          /**
+           *  .recover catches NoSuchFileException and passes an empty
+           *  ByteString to downstream stages. The use of .filterNot is
+           *  somewhat murky here but works otherwise downstream stages
+           *  would fail. Is there a better way to get the types right?
            */
-            .recover({ case _: NoSuchFileException => ByteString() })
-          /* s3Source */
-            // .via(csvPieces)
-            // .via(CsvParsing.lineScanner())
-            // .filter(filterFunction)
-            // .map(formatCsvLine)
+            .recover({ case _: NoSuchFileException => ByteString() } )
+            .filterNot({_ == ByteString()})
       })
 
     /**
@@ -203,7 +222,7 @@ class StreamController @Inject(
        * requested.
        * TODO: Test whether DirectoryIO from Alpakka can do this job better
        */
-      val source2 = FileIO.fromPath(Paths.get("dump/index.csv"))
+      val source2 = FileIO.fromPath(Paths.get("pdump/index.csv"))
         .via(CsvParsing.lineScanner()).map(_(0).utf8String)
       val merge = builder.add(Merge[ByteString](3))
       val partition = builder.add(Partition[ByteString]
@@ -212,8 +231,8 @@ class StreamController @Inject(
       /**
        *  Connect graph: source2 only used if list from request is empty
        */
-      source1 ~> fileFlow.async ~> filterFlow ~> merge.in(0)
-      source2.filter(_ => list.isEmpty) ~> fileFlow.async ~> partition.in
+      source1 ~> fileFlow ~> filterFlow ~> merge.in(0)
+      source2.filter(_ => list.isEmpty) ~> fileFlow ~> partition.in
 
       partition.out(0) ~> filterFlow ~> merge.in(1)
       partition.out(1) ~> merge.in(2)
