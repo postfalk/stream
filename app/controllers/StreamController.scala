@@ -152,7 +152,7 @@ class StreamController @Inject(
     * characters (TODO: incomplete) and limit filename to 64 characters.
     */
   def queryToFilename(in: String): String = {
-    in.replace('=', '_')..replace('&', '_')slice(0, 60)
+    in.replace('=', '_').replace('&', '_').slice(0, 60)
   }
 
   /**
