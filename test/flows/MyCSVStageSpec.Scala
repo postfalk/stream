@@ -5,8 +5,7 @@ import akka.util.ByteString
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 
-import controllers.MyCSVStage
-
+import flows.MyCSVStage
 
 class MyCSVStageSpec extends PlaySpec {
 
@@ -19,15 +18,29 @@ class MyCSVStageSpec extends PlaySpec {
     "3,min,estimated,1980,3,3.4\n" ++ 
     "4,min,estimated,1980,3,7.8\n" ++ 
     "5,min,estimated,1980,3,.2\n" ++ 
-    "6,min,estimated,1980,3,9\n"
+    "6,min,estimated,1980,3,9"
+  }.grouped(70).toList.map(ByteString(_))
+
+  // validate returned chunk
+  def testFunction(in: ByteString): Boolean = {
+    val Pattern = {"""^\d{1,9},(min|max|median|mean),""" +
+      """(estimated|p10|p90|observed),\d{4},\d{1,2},[\d\.]{1,}$"""}.r
+    val lines = in.utf8String.split("\n")
+    lines.foldLeft(true) {
+      (a, b) => {
+        a && (b.matches(Pattern.toString) || b.length == 0)
+      }
+    }
   }
-     .grouped(70).toList.map(ByteString(_))
 
   "MyCSVStage" must {
     "chop CSV in orderly chunks" in {
       val flow = Flow.fromGraph(new MyCSVStage())
       val source = Source(example)
-      source.via(flow).to(Sink.foreach((s) => println(s.utf8String))).run()
+      val res = source
+        .via(flow)
+        .to(Sink.foreach((item) => testFunction(item) must be (true)))
+        .run()
     }
   }
 

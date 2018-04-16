@@ -30,10 +30,10 @@ class StreamControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injecti
     "be csv" in {
       val controller = new StreamController(stubControllerComponents())
       val res = controller.chunkedFromSource()
-        .apply(FakeRequest(GET, "/stream/?segments=10000042"))
+        .apply(FakeRequest(GET, "/stream/?segments=10000042,10000688,10000692"))
       val content = contentAsString(res)
       val lines = content.split("\n")
-      lines.length must equal (9504)
+      lines.length must equal (28513)
       lines.foreach((item) => { 
         item.split(",").length must equal (6)
       })
@@ -44,17 +44,15 @@ class StreamControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injecti
     "filter properly" in {
       val controller = new StreamController(stubControllerComponents())
       val query = List(
-        Seq(ByteString("min")), 
-        Seq(ByteString("estimated")), 
-        Seq[ByteString](),
-        Seq[ByteString]())
+        Seq(ByteString("1980")),
+        Seq(ByteString("2")))
       var in = "1000,min,estimated,1980,2,1.0"
         .split(",").map(ByteString(_)).toList
       controller.myFilter(in, query) must be (true)
-      in = "1000,max,estimated,1980,2,1.0"
+      in = "1000,max,estimated,1981,2,1.0"
         .split(",").map(ByteString(_)).toList
       controller.myFilter(in, query) must be (false)
-      }
-
+    }
   }
+
 }

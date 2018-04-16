@@ -3,60 +3,14 @@ package controllers
 import javax.inject.Inject
 import java.nio.file.{Paths, NoSuchFileException}
 import play.api.mvc.{
-  Action, Request, AnyContent, AbstractController, ControllerComponents}
+  Request, AnyContent, AbstractController, ControllerComponents}
 import akka.NotUsed
-import akka.event.Logging
-import akka.actor.ActorSystem
-import akka.stream.stage.{
-  GraphStage, GraphStageLogic, InHandler, OutHandler}
-import akka.stream.{
-  Attributes, Inlet, Outlet, SourceShape, FlowShape}
+import akka.stream.SourceShape
 import akka.stream.scaladsl.{
   FileIO, Source, Sink, GraphDSL, Merge, Flow, Partition, Concat}
 import akka.util.ByteString
 import akka.stream.alpakka.csv.scaladsl.CsvParsing
 
-/**
- *  Experiment with custom flow stage for in-memory processing
- *  (i.e. filtering) of chunks. This stage chunks stream along CSV line
- *  boundaries. A chunk would contain many CSV lines but ensure that a line
- *  break coincident with end of the chunk. This stage holds state between
- *  chunks (leftover from incoming chunk between last line break and chunk
- *  end.)
- *
- *  Currently unused but tested. Might come in handy for later improvement of
- *  the filter stage.
- */
-class MyCSVStage extends GraphStage[FlowShape[ByteString, ByteString]] {
-
-  private val in = Inlet[ByteString](Logging.simpleName(this) + ".in")
-  private val out = Outlet[ByteString](Logging.simpleName(this) + ".out")
-  override val shape = FlowShape(in, out)
-
-  override def createLogic(inheritedAttributes: Attributes) = 
-    new GraphStageLogic(shape) with InHandler with OutHandler {
-
-    setHandlers(in, out, this)
-    var leftover = ByteString()
-
-    override def onPush(): Unit = {
-      val elem = leftover ++ grab(in)
-      val endPosition = elem.lastIndexOf(10)
-      val send = elem.slice(0, endPosition+1)
-      leftover = elem.slice(endPosition+1, elem.size+1)
-      push(out, send)
-    }
-
-    override def onPull(): Unit = {
-      pull(in)
-    }
-
-    override def onUpstreamFinish(): Unit = {
-      emit(out, leftover)
-      completeStage()
-    }
-  }
-}
 
 /**
  *  Stream CSV data according to requested stream segments and filters
@@ -76,8 +30,6 @@ class StreamController @Inject(
   {
     (0 until 2).foldLeft(true) {
       (agg, i) => {
-        // exit early once agg false, not sure whether that makes sense
-        if (agg == false) { return false }
         agg &&
           (query(i).isEmpty || query(i).foldLeft(false) { _ || in(i+3) == _ })
       }
@@ -132,6 +84,17 @@ class StreamController @Inject(
     keys: List[String]): List[Seq[ByteString]] = {
       keys.map(getValues(_, in.queryString))
   }
+  /**
+   * Additional manipulations of the filterList. Currently extends
+   * yearList if yearBegin and yearEnd exist
+   */
+  def extendFilterList(
+    in: Request[AnyContent], 
+    lst: List[Seq[ByteString]]): List[Seq[ByteString]] = {
+      val yearsBegin = getValues("years_begin", in.queryString)
+      val yearsEnd = getValues("years_end", in.queryString)
+    lst
+  }
 
   /**
    * Format CSV output stream
@@ -180,7 +143,8 @@ class StreamController @Inject(
     /**
      * Create list from query parameters and convert to immutable list
     */
-    val filterList = getFilterList(request, keywords)
+    val filterList = extendFilterList(
+      request, getFilterList(request, keywords))
 
     /**
      * Set query before passing function to flow
@@ -231,7 +195,7 @@ class StreamController @Inject(
 
     val source = Source.fromGraph(GraphDSL.create() {
       implicit builder =>
-      import GraphDSL.Implicits._
+        import GraphDSL.Implicits._
 
       /**
        * Stream segments requested through query parameters
@@ -243,7 +207,8 @@ class StreamController @Inject(
        * Assuming that this is faster than stating a folder with ~130.000
        * subfolders.
        */
-      val source2 = FileIO.fromPath(Paths.get("pdump/index.csv"))
+      val source2 = FileIO
+        .fromPath(Paths.get("pdump/index.csv"))
         .via(CsvParsing.lineScanner()).map(_(0).utf8String)
 
       val merge = builder.add(Merge[ByteString](3))
