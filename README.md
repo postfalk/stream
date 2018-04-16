@@ -47,7 +47,14 @@ https://rivers.codefornature.org/api/v2/stream/?segments=10000042
 
 This will return estimated maximal and minimal values for 1980 and 1981 in Mai, June, and September for all ~ 130,000 stream segments. Since we scanning about 1/8 of the data that should take about 8 to 10 minutes on a fast Internet connection. 
 
-## A note about speed ##
+## A note on speed ##
 
 The data is currently stored in partioned CSV files on the filesystem. The first two params ```segments```, ```measurements``` and ```variables``` will determine how much of the data will be scanned. The parameters years and months don't have a big influence on the overall download time since the data has to be scanned anyways.
 
+In general, best performance can be achieved by limiting the download as much as possible to the required subset. Be also aware that there is a maximimum of 1,048,576 rows that can be opened in Microsoft Excel. One stream segments provides 9,504 or 12,672 data points (depending on the absence or presence of observed data) which means that only about 100 stream segments can be loaded if not further filtered down.
+
+## Outstanding features ##
+
+1. Rate limits/throttling based on authorization.
+2. Some ```offset``` and ```limit``` parameters for paginated downloads.
+3. Support for very long lists of comids that cannot be represented within a 4kByte GET request. (Implement POST, request by comid list from file).
