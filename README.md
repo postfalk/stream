@@ -1,4 +1,4 @@
-# Natural Flows API v2 draft
+# Natural Flows API v2 (draft)
 
 ## Introduction ##
 
