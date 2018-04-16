@@ -17,3 +17,26 @@ Both query steps will be based on independant APIs which keep the two datasets (
 For the first step, querying for stream segments the first iteration of the API can stand in, especially if the ```data``` attribute is excluded from the projection: https://rivers.codefornature.org/api/data/?exclude=data (TODO: currently does not work). Any map service based on NHDv2 can be used to achieve that rasult. (we might prototype right of ArcGIS Online). 
 
 For the second step we build a powerful streaming up based on Scala, Play, and Akka that allows for streaming and filtering of the entire data set (47.3 GigaByte) without https timeouts or memory overrun. In current production setup the complete dataset scan takes about 1 hour. We should be able to improve this performance. For now, it seems to be the slowest acceptable speed. See new endpoint is https://rivers.codefornature.org/api/v2/stream. Currently ```text/csv``` is the only available format and it will trigger a download.
+
+## Query schema ##
+
+The data will be returned in CSV with the header column
+
+```
+comid,measurement,variable,year,month,value
+```
+
+Data will be returned in order of those fields. 
+
+
+For filtering the api uses the key words: ```measurements```, ```variables```, ```years```, ```months```. Please be aware of the plural use of these parameters since they all accepts lists as input. 
+
+Allowed values for ```measurements``` are ```max, mean, median, min```.
+Allowed values for ```variables``` are ```estimated, p10, p90, observed```.
+Allowed values for ```years``` are the years from 1950 to 2015
+Allowed values for ```months``` are 1 .. 12
+
+Example:
+
+https://rivers.codefornature.org/api/v2/stream/?measurements=max,min&variables=estimated&years=1980,1981&months=5,6,9
+
