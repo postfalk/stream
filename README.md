@@ -43,7 +43,7 @@ https://rivers.codefornature.org/api/v2/stream/?measurements=max,min&variables=e
 
 or for a single stream segment
 
-https://rivers.codefornature.org/api/v2/stream/?segments=1000042
+https://rivers.codefornature.org/api/v2/stream/?segments=10000042
 
 This will return estimated maximal and minimal values for 1980 and 1981 in Mai, June, and September for all ~ 130,000 stream segments. Since we scanning about 1/8 of the data that should take about 8 to 10 minutes on a fast Internet connection. 
 
