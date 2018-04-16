@@ -29,14 +29,20 @@ comid,measurement,variable,year,month,value
 Data will be returned in order of those fields. 
 
 
-For filtering the api uses the key words: ```measurements```, ```variables```, ```years```, ```months```. Please be aware of the plural use of these parameters since they all accepts lists as input. 
+For filtering the api uses the key words: ```comids```, ```measurements```, ```variables```, ```years```, ```months```. Please be aware that this parameters are plural words since they accepts lists. If a query parameter is not provided, data for all valid data will be returned (unfiltered). 
 
+Allowed values for ```segments``` are comids
 Allowed values for ```measurements``` are ```max, mean, median, min```.
 Allowed values for ```variables``` are ```estimated, p10, p90, observed```.
 Allowed values for ```years``` are the years from 1950 to 2015
 Allowed values for ```months``` are 1 .. 12
 
-Example:
+Examples:
 
 https://rivers.codefornature.org/api/v2/stream/?measurements=max,min&variables=estimated&years=1980,1981&months=5,6,9
 
+This will return estimated maximal and minimal values for 1980 and 1981 in Mai, June, and September for all ~ 130,000 stream segments. Since we scanning about 1/8 of the data that should take about 8 to 10 minutes on a fast Internet connection. 
+
+## A note about speed ##
+
+The data is currently stored in partioned CSV files on the file system. The first two params ```measurements``` and ```variables``` will determine how much of the data will be scanned. The parameters years and months don't have a big influence on the overall download time since the data has to be scanned anyways.
