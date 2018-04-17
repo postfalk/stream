@@ -38,9 +38,13 @@ For filtering the api uses the key words: ```segments```, ```measurements```, ``
 In addition you can use ```begin_year``` and ```end_year``` to limit the years returned. In this case only one value is allowed
 
 Allowed values for ```segments``` are comids.
+
 Allowed values for ```measurements``` are ```max```, ```mean```, ```median```, ```min```.
+
 Allowed values for ```variables``` are ```estimated```, ```p10```, ```p90```, ```observed```.
+
 Allowed values for ```begin_years``` and ```end_years``` are the years from 1950 to 2015
+
 Allowed values for ```months``` are 1 .. 12
 
 Examples:
