@@ -33,17 +33,19 @@ comid,measurement,variable,year,month,value
 
 Data will be orderd by these fields. 
 
-For filtering the api uses the key words: ```segments```, ```measurements```, ```variables```, ```years```, and ```months```. Please be aware that all these parameters are plural words since they accepts lists (comma-separated lists without spaces). If a query parameter is not provided, data for all valid values will be returned (unfiltered). 
+For filtering the api uses the key words: ```segments```, ```measurements```, ```variables```, and ```months```. Please be aware that all these parameters are plural words since they accepts lists (comma-separated lists without spaces). If a query parameter is not provided, data for all valid values will be returned (unfiltered). 
+
+In addition you can use ```begin_year``` and ```end_year``` to limit the years returned. In this case only one value is allowed
 
 Allowed values for ```segments``` are comids.
 Allowed values for ```measurements``` are ```max```, ```mean```, ```median```, ```min```.
 Allowed values for ```variables``` are ```estimated```, ```p10```, ```p90```, ```observed```.
-Allowed values for ```years``` are the years from 1950 to 2015
+Allowed values for ```begin_years``` and ```end_years``` are the years from 1950 to 2015
 Allowed values for ```months``` are 1 .. 12
 
 Examples:
 
-https://rivers.codefornature.org/api/v2/stream/?measurements=max,min&variables=estimated&years=1980,1981&months=5,6,9
+https://rivers.codefornature.org/api/v2/stream/?measurements=max,min&variables=estimated&months=5,6,9&begin_year=1980&end_year=1981
 
 This will return estimated maximal and minimal values for 1980 and 1981 in Mai, June, and September for all ~ 130,000 stream segments. Since we scanning about 1/8 of the data that should take about 8 to 10 minutes on a fast Internet connection. 
 
