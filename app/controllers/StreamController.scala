@@ -11,7 +11,6 @@ import akka.stream.scaladsl.{
 import akka.util.ByteString
 import akka.stream.alpakka.csv.scaladsl.CsvParsing
 
-
 /**
  *  Stream CSV data according to requested stream segments and filters
  */
@@ -20,21 +19,17 @@ class StreamController @Inject(
 
   val csvHeaderLine = "comid,measurement,variable,year,month,value\n"
 
-  /**
-   * Filter function to filter stream by query parameters
-   * TODO: Generalize!
-   */
-  def myFilter(
-    in: List[ByteString],
-    query: List[Seq[ByteString]]): Boolean =
-  {
-    (0 until 2).foldLeft(true) {
-      (agg, i) => {
-        agg &&
-          (query(i).isEmpty || query(i).foldLeft(false) { _ || in(i+3) == _ })
-      }
-    }
+  def yearsFilter(in: List[ByteString], begin: String, end: String): 
+  Boolean = {
+    val checkThisOne = in(3).utf8String
+    begin <= checkThisOne && end >= checkThisOne
   }
+
+  def monthsFilter(in: List[ByteString], monthsList: List[ByteString]):
+    Boolean = {
+      monthsList
+        .foldLeft(false) {_ || in(4) == _}
+    }
 
   /**
    * 1. Normalize query parameters to deal with different representations of
@@ -59,8 +54,16 @@ class StreamController @Inject(
   }
 
   /**
+   * Get switch from queryParameters, will decide whether filterFlow is 
+   * necessary. Determine whether list of keys is in query parameters.
+   */
+  def getSwitch(in: Map[String, Seq[String]], lst: List[String]): Boolean = {
+    lst.foldLeft(false)(_ || !getValues(_, in).isEmpty)
+  }
+
+  /**
    * Limit values extracted from query parameters by a default list. Extend to
-   * allowed options if parameter is not present or has no value after equals 
+   * allowed options if parameter is not present or has no value after equals
    * sign.
    */
   def getLimitedValues(
@@ -76,24 +79,12 @@ class StreamController @Inject(
   }
 
   /**
-   * Create a list of query values to be applied by the filter function. Query
-   * values are mapped by list position.
+   *  Check whether input is a valid year and return default if empty
+   *  return String for further processing
    */
-  def getFilterList(
-    in: Request[AnyContent],
-    keys: List[String]): List[Seq[ByteString]] = {
-      keys.map(getValues(_, in.queryString))
-  }
-  /**
-   * Additional manipulations of the filterList. Currently extends
-   * yearList if yearBegin and yearEnd exist
-   */
-  def extendFilterList(
-    in: Request[AnyContent], 
-    lst: List[Seq[ByteString]]): List[Seq[ByteString]] = {
-      val yearsBegin = getValues("years_begin", in.queryString)
-      val yearsEnd = getValues("years_end", in.queryString)
-    lst
+  def getYearOrDefault(key: String, in: Map[String, Seq[String]], 
+    default: String): String = {
+      getValues(key, in).headOption.getOrElse(ByteString(default)).utf8String
   }
 
   /**
@@ -101,13 +92,6 @@ class StreamController @Inject(
    */
   def formatCsvLine(lst: List[ByteString]): ByteString = {
     lst.reduce(_ ++ ByteString(",") ++ _) ++ ByteString("\n")
-  }
-
-  /**
-    *  Checks whether filterList is empty or not
-    */
-  def partitionFunction(in:List[Seq[ByteString]]):Boolean = {
-    in.foldLeft(true) {(acc, i) => acc && i.isEmpty }
   }
 
   /**
@@ -126,8 +110,15 @@ class StreamController @Inject(
 
     implicit request: Request[AnyContent] =>
 
-    val filename = "flow_" + queryToFilename(request.rawQueryString) +
+    val outputFilename = "flow_" + queryToFilename(request.rawQueryString) +
       ".csv"
+
+    /**
+      * filterParams used for filtering, they will be matched by position in list.
+      * This is different from querying which works along the data partition on
+      * the file system
+      */
+    val filterParams = List("begin_year", "end_year", "months")
 
     val measurements = getLimitedValues("measurements", request.queryString,
       List("max", "min", "mean", "median"))
@@ -135,25 +126,19 @@ class StreamController @Inject(
     val variables = getLimitedValues("variables", request.queryString,
       List("estimated", "p10", "p90", "observed"))
 
-    /**
-     * Keywords used for filtering, they will be matched by position in list
-     */
-    val keywords = List("years", "months")
+    val months = getLimitedValues("months", request.queryString,
+      (1 until 13).map(_.toString).toList)
+
+    val beginYear = getYearOrDefault("begin_year", request.queryString,
+      "1950")
+
+    val endYear = getYearOrDefault("end_year", request.queryString,
+      "2015")
+
+    val switch = getSwitch(request.queryString, filterParams)
 
     /**
-     * Create list from query parameters and convert to immutable list
-    */
-    val filterList = extendFilterList(
-      request, getFilterList(request, keywords))
-
-    /**
-     * Set query before passing function to flow
-     */
-    def filterFunction(in: List[ByteString]): Boolean =
-      myFilter(in: List[ByteString], filterList)
-
-    /**
-     * Convert segments in query params to a list
+     * Convert segments in query params to list
      */
     val segmentList = getValues("segments", request.queryString)
       .map(_.utf8String)
@@ -180,17 +165,19 @@ class StreamController @Inject(
            *  ByteString to downstream stages. The use of .filterNot is
            *  somewhat murky here but works otherwise downstream stages
            *  would fail. Is there a better way to get the types right?
+           *  TODO: check orElse instead
            */
             .recover({ case _: NoSuchFileException => ByteString() } )
             .filterNot({_ == ByteString()})
       })
 
     /**
-     *  Flow filtering by query parameters, used only for years and months
+     *  Flow, filters by query parameters, used only for years and months
      */
     val filterFlow = Flow[ByteString]
       .via(CsvParsing.lineScanner())
-      .filter(filterFunction)
+      .filter(yearsFilter(_, beginYear, endYear))
+      .filter(monthsFilter(_, months))
       .map(formatCsvLine)
 
     val source = Source.fromGraph(GraphDSL.create() {
@@ -198,13 +185,13 @@ class StreamController @Inject(
         import GraphDSL.Implicits._
 
       /**
-       * Stream segments requested through query parameters
+       * Stream segments requested by query parameters
        */
       val source1 = Source(segmentList)
 
       /**
        * Stream source from index.csv file, when no segments are provided
-       * Assuming that this is faster than stating a folder with ~130.000
+       * Assume that this is faster than stat'ing a folder with ~130.000
        * subfolders.
        */
       val source2 = FileIO
@@ -214,14 +201,14 @@ class StreamController @Inject(
       val merge = builder.add(Merge[ByteString](3))
 
       /**
-       * Using Partition here to circumvent filter function if no filter
-       * values provided
+       * Use Partition to circumvent filter function if no filter values
+       * provided
        */
       val partition = builder.add(Partition[ByteString]
-        (2, in => if (partitionFunction(filterList)) 1 else 0))
+        (2, in => if (switch) 0 else 1))
 
       /**
-       * Assembling the flow
+       * Assemble the flow
        */
       source1 ~> fileFlow ~> filterFlow ~> merge.in(0)
       source2.filter(_ => segmentList.isEmpty) ~> fileFlow ~> partition.in
@@ -242,7 +229,7 @@ class StreamController @Inject(
         source:Source[ByteString, NotUsed])(Concat(_))
     Ok.chunked(csvSource)
       .withHeaders(
-        CONTENT_DISPOSITION -> "attachment; filename=".concat(filename))
+        CONTENT_DISPOSITION -> "attachment; filename=".concat(outputFilename))
       .as("text/csv")
   }
 
