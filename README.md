@@ -26,10 +26,10 @@ The decision to keep the two datasets (NHDv2 and USGS/TNC Natural Flows)
 separate will guarantee a cleaner, more performative API, requires less
 data manipulation.
 
-The second API uses a stack of Scala, Play, and Akka allowing for streaming
-and filtering of the entire dataset application based on Scala, Play, and 
-Akka  streaming and filtering of the entire dataset (47.3 GigaByte, ~1 
-billion data points) without timeouts or memory overruns. 
+The second API uses a stack of [Scala](https://www.scala-lang.org/), 
+[Play](https://www.playframework.com/), and [Akka](https://akka.io/) 
+allowing for streaming and filtering of the entire dataset without 
+timeouts or memory overruns. 
 
 With the current production setup a complete dataset scan takes about one hour
 if the Internet speed allows. 
