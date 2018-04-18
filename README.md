@@ -80,7 +80,7 @@ Allowed values for ```statistics``` are ```max```, ```mean```,
 Allowed values for ```variables``` are ```estimated```, ```p10```,
 ```p90```, ```observed```.
 
-Allowed values for ```begin_years``` and ```end_years``` are 1950 to 2015
+Allowed values for ```begin_year``` and ```end_year``` are 1950 to 2015
 
 Allowed values for ```months``` are 1 .. 12
 
