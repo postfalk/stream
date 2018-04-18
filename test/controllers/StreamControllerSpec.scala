@@ -15,11 +15,10 @@ import akka.util._
 
 class StreamControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injecting with Results {
 
-  implicit lazy val materializer: Materializer = app.materializer
-
   "StreamController GET /stream/" should {
 
-    "return Ok and text/plain" in {
+    "return Ok and content-type text/csv" in {
+      implicit lazy val materializer: Materializer = app.materializer
       val controller = new StreamController(stubControllerComponents())
       val res = controller.chunkedFromSource()
         .apply(FakeRequest(GET, "/stream/"))
@@ -28,16 +27,66 @@ class StreamControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injecti
     }
 
     "be csv" in {
+      implicit lazy val materializer: Materializer = app.materializer
       val controller = new StreamController(stubControllerComponents())
-      val res = controller.chunkedFromSource()
-        .apply(FakeRequest(GET, "/stream/?segments=10000042,10000688,10000692"))
-      val content = contentAsString(res)
-      val lines = content.split("\n")
+      val lines = contentAsString(
+        controller.chunkedFromSource()
+        .apply(FakeRequest(GET,
+          "/stream/?comids=10000042,10000688,10000692"))
+      ).split("\n")
       lines.length must equal (28513)
-      lines.foreach((item) => { 
+      lines(0) must be ("comid,statistic,variable,year,month,value")
+      lines.foreach((item) => {
         item.split(",").length must equal (6)
       })
     }
+
+    "filter according to schema" in {
+      implicit lazy val materializer: Materializer = app.materializer
+      val controller = new StreamController(stubControllerComponents())
+      val lines1 = contentAsString(
+        controller.chunkedFromSource()
+        .apply(FakeRequest(GET,
+          "/stream/?comids=10000042&statistics=min,max"))
+      ).split("\n")
+      lines1 must have length 4753
+      lines1.tail.foreach((item) => {
+        Some(item.split(",")(1)) must contain oneOf ("min", "max")
+      })
+      val lines2 = contentAsString(
+        controller.chunkedFromSource()
+        .apply(FakeRequest(GET,
+          "/stream/?comids=10000042&variables=estimated"))
+      ).split("\n")
+      lines2 must have length 3169
+      lines2.tail.foreach(item => {item.split(",")(2) must be ("estimated")})
+      val lines3 = contentAsString(
+        controller.chunkedFromSource()
+        .apply(FakeRequest(GET,
+          "/stream/?comids=10000042&months=1,5"))
+      ).split("\n")
+      lines3 must have length 1585
+      lines3.tail.foreach((item) => {
+         Some(item.split(",")(4)) must contain oneOf ("1", "5")
+      })
+      val lines4 = contentAsString(
+        controller.chunkedFromSource()
+        .apply(FakeRequest(GET,
+          "/stream/?comids=10000042&months=1&begin_year=1980&end_year=1982"))
+      ).split("\n")
+      lines4.length must equal (37)
+      lines4.tail.foreach((item) => {
+        Some(item.split(",")(3)) must contain oneOf ("1980", "1981", "1982")
+        item.split(",")(4) must be ("1")
+      })
+      val lines5 = contentAsString(
+        controller.chunkedFromSource()
+        .apply(FakeRequest(GET,
+          "/stream/?comids=10000042&months=1&begin_year=2018"))
+      ).split("\n")
+      lines5 must have length 1
+    }
+
   }
 
   "StreamController monthsFilter" should {

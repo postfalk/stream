@@ -12,12 +12,10 @@ import akka.util.ByteString
 import akka.stream.alpakka.csv.scaladsl.CsvParsing
 
 /**
- *  Stream CSV data according to requested stream segments and filters
+ *  Stream CSV data according to requested stream comids and filters
  */
 class StreamController @Inject(
   ) (cc: ControllerComponents) extends AbstractController(cc) {
-
-  val csvHeaderLine = "comid,measurement,variable,year,month,value\n"
 
   def yearsFilter(in: List[ByteString], begin: String, end: String): 
   Boolean = {
@@ -113,14 +111,9 @@ class StreamController @Inject(
     val outputFilename = "flow_" + queryToFilename(request.rawQueryString) +
       ".csv"
 
-    /**
-      * filterParams used for filtering, they will be matched by position in list.
-      * This is different from querying which works along the data partition on
-      * the file system
-      */
-    val filterParams = List("begin_year", "end_year", "months")
+    val csvHeaderLine = "comid,statistic,variable,year,month,value\n"
 
-    val measurements = getLimitedValues("measurements", request.queryString,
+    val statistics = getLimitedValues("statistics", request.queryString,
       List("max", "min", "mean", "median"))
 
     val variables = getLimitedValues("variables", request.queryString,
@@ -135,12 +128,13 @@ class StreamController @Inject(
     val endYear = getYearOrDefault("end_year", request.queryString,
       "2015")
 
-    val switch = getSwitch(request.queryString, filterParams)
+    val filterSwitch = getSwitch(request.queryString,
+      List("begin_year", "end_year", "months"))
 
     /**
-     * Convert segments in query params to list
+     * Convert comids in query params to list
      */
-    val segmentList = getValues("segments", request.queryString)
+    val comidList = getValues("comids", request.queryString)
       .map(_.utf8String)
       .toList
 
@@ -150,7 +144,7 @@ class StreamController @Inject(
      */
     val fileFlow = Flow[String]
       .flatMapConcat({
-        comid => Source(measurements.map(in => List(comid, in.utf8String)))
+        comid => Source(statistics.map(in => List(comid, in.utf8String)))
       })
       .flatMapConcat({
         item => Source(variables.map(in => item ++ List(in.utf8String)))
@@ -185,12 +179,12 @@ class StreamController @Inject(
         import GraphDSL.Implicits._
 
       /**
-       * Stream segments requested by query parameters
+       * Stream comids requested by query parameters
        */
-      val source1 = Source(segmentList)
+      val source1 = Source(comidList)
 
       /**
-       * Stream source from index.csv file, when no segments are provided
+       * Stream source from index.csv file, when no comids are provided
        * Assume that this is faster than stat'ing a folder with ~130.000
        * subfolders.
        */
@@ -205,13 +199,13 @@ class StreamController @Inject(
        * provided
        */
       val partition = builder.add(Partition[ByteString]
-        (2, in => if (switch) 0 else 1))
+        (2, in => if (filterSwitch) 0 else 1))
 
       /**
        * Assemble the flow
        */
       source1 ~> fileFlow ~> filterFlow ~> merge.in(0)
-      source2.filter(_ => segmentList.isEmpty) ~> fileFlow ~> partition.in
+      source2.filter(_ => comidList.isEmpty) ~> fileFlow ~> partition.in
       partition.out(0) ~> filterFlow ~> merge.in(1)
       partition.out(1) ~> merge.in(2)
 
