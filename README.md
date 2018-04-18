@@ -35,8 +35,8 @@ With the current production setup a complete dataset scan takes about one hour
 if the Internet speed allows. 
 
 The endpoint for the data API is 
-https://rivers.codefornature.org/api/v2/stream/. The ```text/csv``` is the
-only available Content-type. Typing the URL into the address bar of a browser
+https://rivers.codefornature.org/api/v2/stream/. The only available Content-type is
+```text/csv``` is the. Typing the URL into the address bar of a browser
 will trigger a download. 
 
 Since it is a streaming application, the overall size of the download will be
