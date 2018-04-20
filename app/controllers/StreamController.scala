@@ -1,9 +1,11 @@
 package controllers
 
+import java.net.URLDecoder
 import javax.inject.Inject
 import java.nio.file.{Paths, NoSuchFileException}
 import play.api.mvc.{
   Request, AnyContent, AbstractController, ControllerComponents}
+import play.core.parsers.FormUrlEncodedParser
 import akka.NotUsed
 import akka.stream.SourceShape
 import akka.stream.scaladsl.{
@@ -80,7 +82,7 @@ class StreamController @Inject(
    *  Check whether input is a valid year and return default if empty
    *  return String for further processing
    */
-  def getYearOrDefault(key: String, in: Map[String, Seq[String]], 
+  def getYearOrDefault(key: String, in: Map[String, Seq[String]],
     default: String): String = {
       getValues(key, in).headOption.getOrElse(ByteString(default)).utf8String
   }
@@ -97,19 +99,27 @@ class StreamController @Inject(
     * characters (TODO: incomplete) and limit filename to 64 characters.
     */
   def queryToFilename(in: String): String = {
-    in.replace('=', '_').replace('&', '_').slice(0, 60)
+    in.replace('=', '_').replace('&', '_').replace(',', '_').slice(0, 60)
+  }
+
+  def scanRequestBody(requestBody: AnyContent,
+    key: String): Option[List[String]] =
+  {
+    println(requestBody.asJson)
+    Option(null)
   }
 
   /**
-   * A play view that streams CSV data from file to download and applying 
+   * A play view that streams CSV data from file to download and applying
    * filters.
    */
   def chunkedFromSource() = Action {
 
     implicit request: Request[AnyContent] =>
 
-    val outputFilename = "flow_" + queryToFilename(request.rawQueryString) +
-      ".csv"
+    val outputFilename = "flow_" +
+      queryToFilename(URLDecoder.decode(request.rawQueryString, "UTF-8")) +
+        ".csv"
 
     val csvHeaderLine = "comid,statistic,variable,year,month,value\n"
 

@@ -141,4 +141,12 @@ class StreamControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injecti
     }
   }
 
+  "StreamController scanRequestBody" should {
+    "attempt to scan the body in" {
+      val controller = new StreamController(stubControllerComponents())
+      val body = """{"comids": [10000042]}"""
+      val empty = FakeRequest("POST", "/stream", FakeHeaders(), body)
+    }
+  }
+
 }
