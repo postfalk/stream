@@ -4,7 +4,8 @@ import java.net.URLDecoder
 import javax.inject.Inject
 import java.nio.file.{Paths, NoSuchFileException}
 import play.api.mvc.{
-  Request, AnyContent, AbstractController, ControllerComponents}
+  Request, AnyContent, AnyContentAsEmpty, AnyContentAsText,
+  AbstractController, ControllerComponents}
 import play.core.parsers.FormUrlEncodedParser
 import akka.NotUsed
 import akka.stream.SourceShape
@@ -14,12 +15,13 @@ import akka.util.ByteString
 import akka.stream.alpakka.csv.scaladsl.CsvParsing
 
 /**
- *  Stream CSV data according to requested stream comids and filters
+ *  Stream CSV data according to requested stream segments (comids) and
+ *  filters.
  */
 class StreamController @Inject(
   ) (cc: ControllerComponents) extends AbstractController(cc) {
 
-  def yearsFilter(in: List[ByteString], begin: String, end: String): 
+  def yearsFilter(in: List[ByteString], begin: String, end: String):
   Boolean = {
     val checkThisOne = in(3).utf8String
     begin <= checkThisOne && end >= checkThisOne
@@ -54,8 +56,8 @@ class StreamController @Inject(
   }
 
   /**
-   * Get switch from queryParameters, will decide whether filterFlow is 
-   * necessary. Determine whether list of keys is in query parameters.
+   * Get switch from query parameters and decide whether stream needs to flow
+   * through filterFlow.
    */
   def getSwitch(in: Map[String, Seq[String]], lst: List[String]): Boolean = {
     lst.foldLeft(false)(_ || !getValues(_, in).isEmpty)
@@ -96,17 +98,34 @@ class StreamController @Inject(
 
   /**
     * Present some data from query params in filename. Replace illegal
-    * characters (TODO: incomplete) and limit filename to 64 characters.
+    * characters (TODO: incomplete: does not cover all possible cases of 
+    * failure) and nonsense, also limit filename to 64 characters.
     */
   def queryToFilename(in: String): String = {
     in.replace('=', '_').replace('&', '_').replace(',', '_').slice(0, 60)
   }
 
-  def scanRequestBody(requestBody: AnyContent,
-    key: String): Option[List[String]] =
+  /*def scanRequestBody(request: Request[AnyContentAsEmpty], key: String):
+    Option[List[String]] = 
   {
-    println(requestBody.asJson)
-    Option(null)
+    None: Option[List[String]]
+  }
+
+  def scanRequestBody(request: Request[AnyContentAsJson], key: String):
+    Option[List[String]] = 
+  {
+    Some(List("10000042"))
+  }*/
+
+  def scanRequestBody(request: Request[AnyContent]): Option[List[String]] = {
+    val body = request.body.asJson
+    body match {
+      case None => { None: Option[List[String]] }
+      case Some(body) => {
+        val vals = (body \ "comids").asOpt[List[Int]]
+        Option(vals.get.map(_.toString))
+      }
+    }
   }
 
   /**
@@ -144,9 +163,11 @@ class StreamController @Inject(
     /**
      * Convert comids in query params to list
      */
-    val comidList = getValues("comids", request.queryString)
+    val comidListFromGET = getValues("comids", request.queryString)
       .map(_.utf8String)
       .toList
+
+    val comidList = scanRequestBody(request).getOrElse(comidListFromGET)
 
     /**
      *  Flow generating a stream of rows from an incoming stream of comid's 

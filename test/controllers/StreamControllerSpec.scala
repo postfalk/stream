@@ -5,6 +5,7 @@ import scala.concurrent.duration.Duration
 import org.scalatestplus.play._
 import org.scalatestplus.play.guice._
 import play.api.test._
+import play.api.libs.json.Json
 import play.api.test.Helpers._
 import play.api.mvc._
 
@@ -142,10 +143,17 @@ class StreamControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injecti
   }
 
   "StreamController scanRequestBody" should {
-    "attempt to scan the body in" {
+    "attempt to scan the body" in {
       val controller = new StreamController(stubControllerComponents())
-      val body = """{"comids": [10000042]}"""
-      val empty = FakeRequest("POST", "/stream", FakeHeaders(), body)
+      val emptyRequest = FakeRequest("POST", "/stream/")
+      controller.scanRequestBody(emptyRequest)
+        .must(be (None))
+      val body = AnyContentAsJson(Json.parse("""{"comids": [1042,1066]}"""))
+      val jsonRequest = FakeRequest("POST", "/stream")
+        .withBody(body)
+        .withHeaders("Content-Type" -> "application/json")
+      controller.scanRequestBody(jsonRequest)
+        .must(be (Some(List("1042", "1066"))))
     }
   }
 
