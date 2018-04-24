@@ -167,6 +167,10 @@ class StreamController @Inject(
       .map(_.utf8String)
       .toList
 
+    /**
+     *  Check whether there is data in the request body otherwise try to find
+     *  it in the query parameters
+     */
     val comidList = scanRequestBody(request).getOrElse(comidListFromGET)
 
     /**
