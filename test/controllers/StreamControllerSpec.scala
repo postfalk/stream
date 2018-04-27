@@ -5,6 +5,7 @@ import scala.concurrent.duration.Duration
 import org.scalatestplus.play._
 import org.scalatestplus.play.guice._
 import play.api.test._
+import play.api.libs.Files
 import play.api.libs.json.Json
 import play.api.test.Helpers._
 import play.api.mvc._
@@ -142,7 +143,7 @@ class StreamControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injecti
     }
   }
 
-  "StreamController scanRequestBody" should {
+  /* "StreamController scanRequestBody" should {
     "attempt to scan the body" in {
       val controller = new StreamController(stubControllerComponents())
       val emptyRequest = FakeRequest("POST", "/stream/")
@@ -155,6 +156,24 @@ class StreamControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injecti
       controller.scanRequestBody(jsonRequest)
         .must(be (Some(List("1042", "1066"))))
     }
-  }
+  }*/
+
+ "StreamController scanRequestBody" should {
+   "attempt to scan the body" in {
+      val emptyFiles = Seq[MultipartFormData.FilePart[play.api.libs.Files.TemporaryFile]]()
+      val controller = new StreamController(stubControllerComponents())
+      val formData = MultipartFormData(
+        dataParts=Map("comids" -> Seq("42, 88")), files=emptyFiles, 
+        badParts=Seq())
+      val formDataRequest = FakeRequest("POST", "/stream/")
+        .withMultipartFormDataBody(formData)
+      controller.scanRequestBody(formDataRequest) must be (Some(List("42", "88")))
+      val emptyBody = MultipartFormData(dataParts=Map(), files=emptyFiles, 
+        badParts=Seq())
+      val emptyBodyRequest = FakeRequest("POST", "/stream/")
+        .withMultipartFormDataBody(emptyBody)
+      controller.scanRequestBody(emptyBodyRequest) must be (None)
+   }
+ }
 
 }

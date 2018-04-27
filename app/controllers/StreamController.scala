@@ -118,12 +118,18 @@ class StreamController @Inject(
   }*/
 
   def scanRequestBody(request: Request[AnyContent]): Option[List[String]] = {
-    val body = request.body.asJson
+    val body = request.body.asMultipartFormData
     body match {
       case None => { None: Option[List[String]] }
       case Some(body) => {
-        val vals = (body \ "comids").asOpt[List[Int]]
-        Option(vals.get.map(_.toString))
+        val comids = body.dataParts.get("comids")
+        comids match {
+          case None => { None: Option[List[String]] }
+          case Some(comids) => {
+            val vals = comids(0).split(",").toList.map(_.trim())
+            Option(vals)
+          }
+        }
       }
     }
   }
