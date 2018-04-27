@@ -3,8 +3,8 @@
 ## Introduction ##
 
 The Natural Flow API v1 (https://rivers.codefornature.org/) is well suited
-for complex queries with a limited number of returned records. However, there 
-have been two challenges.
+for complex queries with a limited number of returned records. However, we 
+ran into two major challenges.
 
 1. The query schema is cumbersome, the combined use of queries and projection
 is very flexible but turned out to be too complicated for non-coding users.
@@ -12,35 +12,41 @@ is very flexible but turned out to be too complicated for non-coding users.
 2. Queries with a large number of returned records run into time-outs and
 memory overruns, manifesting themselves in HTTP 500 and 502 errors.
 
-The version 2 of the flow data API splits querying into two separate phases.
+The version 2 of the flow data API splits querying into two separate phases:
 
 1. An API that allows for querying stream segments by NHDv2 attributes, e.g.
-comids, river name, geography, stream order, gauging, etc.
+comids, river name, geography, stream order, gauging, etc. Version 1 or any
+GIS layer containing comids can serve this purpose.
 
 2. An API that supports filtering of the Natural Flow dataset created by
 TNC and USGS. It will mainly support querying by lists of comids
-that can be obtained from 1 or otherwise. It provides filters for certain
+that can be obtained from 1 or otherwise. It provides filters for
 statistics, variables, years, and months.
 
 The decision to keep the two datasets (NHDv2 and USGS/TNC Natural Flows)
-separate will guarantee a cleaner, more performative API, requires less
-data manipulation.
+separate will guarantee a cleaner, more performative API.
 
-The second API uses a stack of [Scala](https://www.scala-lang.org/), 
+The new API v2 uses a stack of [Scala](https://www.scala-lang.org/), 
 [Play](https://www.playframework.com/), and [Akka](https://akka.io/) 
 allowing for streaming and filtering of the entire dataset without 
 timeouts or memory overruns. 
 
-With the current production setup a complete dataset scan takes about one hour
-if the Internet speed allows. 
+With the current setup a complete dataset scan/download (not subsetted 
+by comid and including all variables) takes about one hour. 
 
 The endpoint for the data API is 
-https://rivers.codefornature.org/api/v2/stream/. The only available Content-type is
-```text/csv``` is the. Typing the URL into the address bar of a browser
-will trigger a download. 
+https://rivers.codefornature.org/api/v2/stream/. 
 
-Since it is a streaming application, the overall size of the download will be
-unknown until finished.
+Currently, the only available Content-type is ```text/csv```. Transfer-encoding 
+is ```chunked```. Additional content-types can be added as long as they support
+chunked transfer (pure JSON does not since it requires a root block, for 
+alternatives see https://en.wikipedia.org/wiki/JSON_streaming).
+
+Typing the URL into the address bar of a web browser will trigger a download. 
+
+Since the data will be streamed, the overall size of the download will be unknown 
+until finished. Nevertheless, the relatively uniform length of records allows for 
+reasonable estimates.
 
 ## Outlook ##
 
@@ -120,4 +126,7 @@ the absence or presence of observed data) which means that only about
 
 1. Some ```offset``` and ```limit``` parameters for paginated downloads.
 2. Support for very long lists of comids that cannot be represented 
-within a 4kByte GET request. (Implement POST, request by comid list from file).
+within a 2047 character long GET request. (Implement POST, request by 
+comid list from file).
+3. Experiment with Apache Kafka, Parquet, and compression for better, cheaper,
+and faster data storage. 
