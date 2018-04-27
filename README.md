@@ -39,13 +39,14 @@ https://rivers.codefornature.org/api/v2/stream/.
 
 Currently, the only available Content-type is ```text/csv```. Transfer-encoding 
 is ```chunked```. Additional content-types can be added as long as they support
-chunked transfer (pure JSON cannot since it requires a root block, for alternatives
-see https://en.wikipedia.org/wiki/JSON_streaming)
+chunked transfer (pure JSON does not since it requires a root block, for 
+alternatives see https://en.wikipedia.org/wiki/JSON_streaming).
 
 Typing the URL into the address bar of a web browser will trigger a download. 
 
-Since it is a streaming application, the overall size of the download will be
-unknown until finished.
+Since the data will be streamed, the overall size of the download will be unknown 
+until finished. Nevertheless, the relatively uniform length of records allows for 
+reasonable estimates.
 
 ## Outlook ##
 
@@ -125,4 +126,7 @@ the absence or presence of observed data) which means that only about
 
 1. Some ```offset``` and ```limit``` parameters for paginated downloads.
 2. Support for very long lists of comids that cannot be represented 
-within a 4kByte GET request. (Implement POST, request by comid list from file).
+within a 2047 character long GET request. (Implement POST, request by 
+comid list from file).
+3. Experiment with Apache Kafka, Parquet, and compression for better, cheaper,
+and faster data storage. 
