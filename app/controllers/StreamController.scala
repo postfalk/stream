@@ -29,8 +29,7 @@ class StreamController @Inject(
 
   def monthsFilter(in: List[ByteString], monthsList: List[ByteString]):
     Boolean = {
-      monthsList
-        .foldLeft(false) {_ || in(4) == _}
+      monthsList.foldLeft(false) {_ || in(4) == _}
     }
 
   /**
@@ -56,8 +55,8 @@ class StreamController @Inject(
   }
 
   /**
-   * Get switch from query parameters and decide whether stream needs to flow
-   * through filterFlow.
+   * Get switch from query parameters and decide whether stream should pass
+   * filterFlow.
    */
   def getSwitch(in: Map[String, Seq[String]], lst: List[String]): Boolean = {
     lst.foldLeft(false)(_ || !getValues(_, in).isEmpty)
@@ -97,29 +96,18 @@ class StreamController @Inject(
   }
 
   /**
-    * Present some data from query params in filename. Replace illegal
-    * characters (TODO: incomplete: does not cover all possible cases of 
-    * failure) and nonsense, also limit filename to 64 characters.
-    */
-  def queryToFilename(in: String): String = {
-    in.replace('=', '_').replace('&', '_').replace(',', '_').slice(0, 60)
-  }
-
-  def scanRequestBody(request: Request[AnyContent]): Option[List[String]] = {
-    val body = request.body.asFormUrlEncoded
-    body match {
-      case None => { None: Option[List[String]] }
-      case Some(body) => {
-        val comids = body.get("comids")
-        comids match {
-          case None => { None: Option[List[String]] }
-          case Some(comids) => {
-            val vals = comids(0).split(",").toList.map(_.trim())
-            Option(vals)
-          }
-        }
-      }
-    }
+   * Create a default filename from what we have
+   */
+  def filenameFromQuery(query: Map[String, Seq[String]]): String = {
+    val comids = getValues("comids", query).take(5)
+    val statistics = getValues("statistics", query)
+    val variables = getValues("variables", query)
+    val begin_year = getValues("begin_year", query).take(1)
+    val end_year = getValues("end_year", query).take(1)
+    val months = getValues("months", query)
+    val partList = List(ByteString("flow")) ++ comids ++ statistics ++
+      variables ++ begin_year ++ end_year ++ months
+    partList.map(_.utf8String.trim()).mkString("_") ++ ".csv"
   }
 
   /**
@@ -130,42 +118,39 @@ class StreamController @Inject(
 
     implicit request: Request[AnyContent] =>
 
-    val outputFilename = "flow_" +
-      queryToFilename(URLDecoder.decode(request.rawQueryString, "UTF-8")) +
-        ".csv"
+    /**
+     * Check for POST data, use GET data if not available
+     */
+    val query = request.body.asFormUrlEncoded.getOrElse(request.queryString)
+
+    val outputFilename = filenameFromQuery(query)
 
     val csvHeaderLine = "comid,statistic,variable,year,month,value\n"
 
-    val statistics = getLimitedValues("statistics", request.queryString,
+    val statistics = getLimitedValues("statistics", query,
       List("max", "min", "mean", "median"))
 
-    val variables = getLimitedValues("variables", request.queryString,
+    val variables = getLimitedValues("variables", query,
       List("estimated", "p10", "p90", "observed"))
 
-    val months = getLimitedValues("months", request.queryString,
+    val months = getLimitedValues("months", query,
       (1 until 13).map(_.toString).toList)
 
-    val beginYear = getYearOrDefault("begin_year", request.queryString,
+    val beginYear = getYearOrDefault("begin_year", query,
       "1950")
 
-    val endYear = getYearOrDefault("end_year", request.queryString,
+    val endYear = getYearOrDefault("end_year", query,
       "2015")
 
-    val filterSwitch = getSwitch(request.queryString,
+    val filterSwitch = getSwitch(query,
       List("begin_year", "end_year", "months"))
 
     /**
      * Convert comids in query params to list
      */
-    val comidListFromGET = getValues("comids", request.queryString)
+    val comidList = getValues("comids", query)
       .map(_.utf8String)
       .toList
-
-    /**
-     *  Check whether there is data in the request body otherwise try to find
-     *  it in the query parameters
-     */
-    val comidList = scanRequestBody(request).getOrElse(comidListFromGET)
 
     /**
      *  Flow generating a stream of rows from an incoming stream of comid's

@@ -88,7 +88,6 @@ class StreamControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injecti
       ).split("\n")
       lines5 must have length 1
     }
-
   }
 
   "StreamController monthsFilter" should {
@@ -143,36 +142,25 @@ class StreamControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injecti
     }
   }
 
-  /* "StreamController scanRequestBody" should {
-    "attempt to scan the body" in {
+  "StreamController filenameFromQuery" should {
+    "return a filename" in {
       val controller = new StreamController(stubControllerComponents())
-      val emptyRequest = FakeRequest("POST", "/stream/")
-      controller.scanRequestBody(emptyRequest)
-        .must(be (None))
-      val body = AnyContentAsJson(Json.parse("""{"comids": [1042,1066]}"""))
-      val jsonRequest = FakeRequest("POST", "/stream")
-        .withBody(body)
-        .withHeaders("Content-Type" -> "application/json")
-      controller.scanRequestBody(jsonRequest)
-        .must(be (Some(List("1042", "1066"))))
-    }
-  }*/
+      val query = Map[String, Seq[String]]()
+      controller.filenameFromQuery(query) must be ("flow.csv")
+      val longComidQuery = Map("comids" -> 
+        Seq("1042, 1688, 1002, 2003, 3002, 1222"))
+      controller.filenameFromQuery(longComidQuery)
+        .must(be(("flow_1042_1688_1002_2003_3002.csv")))
+      val shortComidQuery = Map("comids" -> Seq("1042, 1688"))
+      controller.filenameFromQuery(shortComidQuery)
+        .must(be(("flow_1042_1688.csv")))
+      val complexQuery = Map("comids" -> Seq("1042"), 
+        "statistics" -> Seq("min,max"), "variables" -> Seq("estimated"),
+        "begin_year" -> Seq("1980,2000"), "end_year" -> Seq("1980"),
+        "months" -> Seq("1","2"))
+      controller.filenameFromQuery(complexQuery)
+        .must(be(("flow_1042_min_max_estimated_1980_1980_1_2.csv")))
 
-  "StreamController scanRequestBody" should {
-    "attempt to scan the body" in {
-      val emptyFiles = Seq[MultipartFormData.FilePart[play.api.libs.Files.TemporaryFile]]()
-      val controller = new StreamController(stubControllerComponents())
-      val formData = MultipartFormData(
-        dataParts=Map("comids" -> Seq("42, 88")), files=emptyFiles, 
-        badParts=Seq())
-      val formDataRequest = FakeRequest("POST", "/stream/")
-        .withMultipartFormDataBody(formData)
-      controller.scanRequestBody(formDataRequest) must be (Some(List("42", "88")))
-      val emptyBody = MultipartFormData(dataParts=Map(), files=emptyFiles, 
-        badParts=Seq())
-      val emptyBodyRequest = FakeRequest("POST", "/stream/")
-        .withMultipartFormDataBody(emptyBody)
-      controller.scanRequestBody(emptyBodyRequest) must be (None)
     }
   }
 
