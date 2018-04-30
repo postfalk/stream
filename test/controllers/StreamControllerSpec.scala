@@ -158,8 +158,8 @@ class StreamControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injecti
     }
   }*/
 
- "StreamController scanRequestBody" should {
-   "attempt to scan the body" in {
+  "StreamController scanRequestBody" should {
+    "attempt to scan the body" in {
       val emptyFiles = Seq[MultipartFormData.FilePart[play.api.libs.Files.TemporaryFile]]()
       val controller = new StreamController(stubControllerComponents())
       val formData = MultipartFormData(
@@ -173,7 +173,7 @@ class StreamControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injecti
       val emptyBodyRequest = FakeRequest("POST", "/stream/")
         .withMultipartFormDataBody(emptyBody)
       controller.scanRequestBody(emptyBodyRequest) must be (None)
-   }
- }
+    }
+  }
 
 }

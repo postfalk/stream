@@ -105,24 +105,12 @@ class StreamController @Inject(
     in.replace('=', '_').replace('&', '_').replace(',', '_').slice(0, 60)
   }
 
-  /*def scanRequestBody(request: Request[AnyContentAsEmpty], key: String):
-    Option[List[String]] = 
-  {
-    None: Option[List[String]]
-  }
-
-  def scanRequestBody(request: Request[AnyContentAsJson], key: String):
-    Option[List[String]] = 
-  {
-    Some(List("10000042"))
-  }*/
-
   def scanRequestBody(request: Request[AnyContent]): Option[List[String]] = {
-    val body = request.body.asMultipartFormData
+    val body = request.body.asFormUrlEncoded
     body match {
       case None => { None: Option[List[String]] }
       case Some(body) => {
-        val comids = body.dataParts.get("comids")
+        val comids = body.get("comids")
         comids match {
           case None => { None: Option[List[String]] }
           case Some(comids) => {
@@ -180,7 +168,7 @@ class StreamController @Inject(
     val comidList = scanRequestBody(request).getOrElse(comidListFromGET)
 
     /**
-     *  Flow generating a stream of rows from an incoming stream of comid's 
+     *  Flow generating a stream of rows from an incoming stream of comid's
      *  by multiplying with requested dimensions and retrieving files.
      */
     val fileFlow = Flow[String]
