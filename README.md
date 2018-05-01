@@ -32,7 +32,8 @@ allowing for streaming and filtering of the entire dataset without
 timeouts or memory overruns. 
 
 With the current setup a complete dataset scan/download (not subsetted 
-by comid and including all variables) takes about one hour. 
+by comid and including all variables) takes about one hour and will yield 
+about 1 billion data points and 47 Gbyte. 
 
 The endpoint for the data API is 
 https://rivers.codefornature.org/api/v2/stream/. 
