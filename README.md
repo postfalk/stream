@@ -1,6 +1,6 @@
 # Natural Flows API v2 (draft)
 
-## Introduction ##
+## Introduction
 
 The Natural Flow API v1 (https://rivers.codefornature.org/) is well suited
 for complex queries with a limited number of returned records. However, we 
@@ -48,18 +48,18 @@ Since the data will be streamed, the overall size of the download will be unknow
 until finished. Nevertheless, the relatively uniform length of records allows for 
 reasonable estimates.
 
-## Outlook ##
+## Outlook
 
 We are developing an application for easily interface with the to step 
 workflow trough a web-based application. An typical example workflow could be:
 A user selects a list of stream segments (comids) by clicking on a watershed and 
 then download a dataset for that selection.
 
-## Variables in the dataset ##
+## Variables in the dataset
 
 (Coming soon)
 
-## Query schema ##
+## Query schema: GET requests
 
 The data will be returned in CSV (```Content-Type: text/csv```) with the header row
 
@@ -103,7 +103,11 @@ For a single stream segment:
 
 https://rivers.codefornature.org/api/v2/stream/?comids=10000042&variables=estimated
 
-## A note on speed ##
+## POST requests
+
+
+
+## A note on speed
 
 The data is currently stored in partioned CSV files on the filesystem.
 The first three query parameters ```comids```, ```statistics``` and
@@ -125,8 +129,5 @@ the absence or presence of observed data) which means that only about
 ## Outstanding features ##
 
 1. Some ```offset``` and ```limit``` parameters for paginated downloads.
-2. Support for very long lists of comids that cannot be represented 
-within a 2047 character long GET request. (Implement POST, request by 
-comid list from file).
-3. Experiment with Apache Kafka, Parquet, and compression for better, cheaper,
+2. Experiment with Apache Kafka, Parquet, and compression for better, cheaper,
 and faster data storage. 
