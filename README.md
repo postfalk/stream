@@ -108,7 +108,39 @@ https://rivers.codefornature.org/api/v2/stream/?comids=10000042&variables=estima
 
 ## POST requests
 
+GET requests are limited to 2047 character urls. Many use cases may 
+exceed this limit, e.g. getting all stream segments for an entire watershed.
+In that case the data can be requested via a POST request with the query 
+data in the body. 
 
+Currently, the Content-type ```application/x-www-form-urlencoded``` is required
+for the request body. This is the default when requested from html forms. The 
+query schema is identical to GET requests.
+
+Since the response Content-type is ```text/csv``` a form request in which the 
+```action``` attribute is set to the url will trigger a download dialogue 
+(tested in Chrome and Firefox). 
+
+An example download form could look like this:
+
+```html
+
+<form action="https://rivers.codefornature.org/v2/stream/" method="post">
+  
+  <!-- Use type=hidden for values preselected by app interactions --> 
+  <input type="hidden" name="comids" value="10000042,10000688">
+  
+  <!-- Use same name for multiple choice -->
+  <input type="checkbox" name="statistics" value="min">
+  <input type="checkbox" name="statistics" value="mean" checked="true">
+  <input type="checkbox" name="statistics" value="median">
+  <input type="checkbox" name="statistics" value="max">
+
+  <button type="submit">Download</button>
+  
+</form>
+
+```
 
 ## A note on speed
 
@@ -132,5 +164,6 @@ the absence or presence of observed data) which means that only about
 ## Outstanding features ##
 
 1. Some ```offset``` and ```limit``` parameters for paginated downloads.
-2. Experiment with Apache Kafka, Parquet, and compression for better, cheaper,
+2. Support additional Content-types for POST (```application/json```. ```text/plain```)
+3. Experiment with Apache Kafka, Parquet, and compression for better, cheaper,
 and faster data storage. 
