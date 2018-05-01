@@ -130,8 +130,8 @@ An example download form could look like this:
   <!-- Use type=hidden for values preselected by app interactions --> 
   <input type="hidden" name="comids" value="10000042,10000688">
   
-  <!-- Use same name for multiple choice -->
-  <p>Statistics</p>
+  <!-- Use same name (not id!) for multiple choice -->
+  <span>Statistics:</span>
   
   <label for="min">Min</label>
   <input id="min" type="checkbox" name="statistics" value="min">
@@ -144,10 +144,11 @@ An example download form could look like this:
   
   <label for="max">Max</label>
   <input id="max" type="checkbox" name="statistics" value="max">
-
+  
   <button type="submit">Download</button>
   
 </form>
+
 
 ```
 
