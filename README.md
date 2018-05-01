@@ -6,8 +6,9 @@ The Natural Flow API v1 (https://rivers.codefornature.org/) is well suited
 for complex queries with a limited number of returned records. However, we 
 ran into two major challenges.
 
-1. The query schema is cumbersome, the combined use of queries and projection
-is very flexible but turned out to be too complicated for non-coding users.
+1. The (MongoDb-based) query schema is cumbersome, the combined use of queries
+and projection is very flexible but turned out to be too complicated for 
+non-coding users.
 
 2. Queries with a large number of returned records run into time-outs and
 memory overruns, manifesting themselves in HTTP 500 and 502 errors.
@@ -24,18 +25,18 @@ that can be obtained from 1 or otherwise. It provides filters for
 statistics, variables, years, and months.
 
 The decision to keep the two datasets (NHDv2 and USGS/TNC Natural Flows)
-separate will guarantee a cleaner, more performative API.
+separate guarantees a cleaner and more performative API.
 
-The new API v2 uses a stack of [Scala](https://www.scala-lang.org/), 
+API v2 uses [Scala](https://www.scala-lang.org/), 
 [Play](https://www.playframework.com/), and [Akka](https://akka.io/) 
 allowing for streaming and filtering of the entire dataset without 
 timeouts or memory overruns. 
 
-With the current setup a complete dataset scan/download (not subsetted 
-by comid and including all variables) takes about one hour and will yield 
-about 1 billion data points and 47 Gbyte. 
+A complete scan/download of the Natural Flow dataset (not subsetted 
+by comid and including all variables) will take about and hour and yields 
+~ 1 billion records and 47 Gbyte of data. 
 
-The endpoint for the data API is 
+The endpoint for the API v2 is 
 https://rivers.codefornature.org/api/v2/stream/. 
 
 Currently, the only available Content-type is ```text/csv```. Transfer-encoding 
@@ -51,8 +52,7 @@ reasonable estimates.
 
 ## Outlook
 
-We are developing an application for easily interface with the to step 
-workflow trough a web-based application. An typical example workflow could be:
+A web application will serve as interface. An typical example workflow could be:
 A user selects a list of stream segments (comids) by clicking on a watershed and 
 then download a dataset for that selection. For a prototype see
 
@@ -69,8 +69,6 @@ The data will be returned in CSV (```Content-Type: text/csv```) with the header 
 ```
 comid,statistics,variable,year,month,value
 ```
-
-The data ata will be orderd by these fields.
 
 For filtering the query parameters ```comids```, ```statistics```,
 ```variables```, and ```months``` are available. Please note that all of these
@@ -108,16 +106,16 @@ https://rivers.codefornature.org/api/v2/stream/?comids=10000042&variables=estima
 
 ## POST requests
 
-GET requests are limited to 2047 character urls. Many use cases may 
-exceed this limit, e.g. getting all stream segments for an entire watershed.
-In that case the data can be requested via a POST request with the query 
-data in the body. 
+GET requests are limited to 2047 characters that can be presented in URLs. 
+Many use cases may exceed this limit, e.g. getting all stream segments for 
+an entire watershed. In that case the data can be downloaded via a POST request 
+with the query data in the body. 
 
-Currently, the Content-type ```application/x-www-form-urlencoded``` is required
-for the request body. This is the default when requested from html forms. The 
-query schema is identical to GET requests.
+Currently, the Content-type ```application/x-www-form-urlencoded``` is required. 
+This is the default when requested from html forms. The query schema is identical 
+to GET requests.
 
-Since the response Content-type is ```text/csv``` a form request in which the 
+Since the response Content-type is ```text/csv``` a form submissions in which the 
 ```action``` attribute is set to the url will trigger a download dialogue 
 (tested in Chrome and Firefox). 
 
@@ -145,6 +143,8 @@ An example download form could look like this:
   <label for="max">Max</label>
   <input id="max" type="checkbox" name="statistics" value="max">
   
+  <!-- add additional fields here -->
+  
   <button type="submit">Download</button>
   
 </form>
@@ -154,15 +154,14 @@ An example download form could look like this:
 
 ## A note on speed
 
-The data is currently stored in partioned CSV files on the filesystem.
+The data is stored in partioned CSV files on the filesystem.
 The first three query parameters ```comids```, ```statistics``` and
 ```variables``` will determine how many of the roughly 600,000 files
 will be scanned by the application. 
 
-The use of the parameters years and months doesn't have influence on
-the overall download time since entire files have to be scanned
-no matter how big the subset will be. It might be an advantage to
-filter on a very slow Internet connection.
+The use of the parameters years and months doesn't influence the
+overall download much time since entire files have to be scanned
+no matter how big the subset will be.
 
 Limiting the download as much as possible and only requesting data
 as needed will provide the best performance. Be also aware that there
