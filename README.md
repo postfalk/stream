@@ -54,7 +54,9 @@ reasonable estimates.
 We are developing an application for easily interface with the to step 
 workflow trough a web-based application. An typical example workflow could be:
 A user selects a list of stream segments (comids) by clicking on a watershed and 
-then download a dataset for that selection.
+then download a dataset for that selection. For a prototype see
+
+https://s3.amazonaws.com/rivers.codefornature.org/index.html
 
 ## Variables in the dataset
 
