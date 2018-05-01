@@ -131,10 +131,19 @@ An example download form could look like this:
   <input type="hidden" name="comids" value="10000042,10000688">
   
   <!-- Use same name for multiple choice -->
-  <input type="checkbox" name="statistics" value="min">
-  <input type="checkbox" name="statistics" value="mean" checked="true">
-  <input type="checkbox" name="statistics" value="median">
-  <input type="checkbox" name="statistics" value="max">
+  <p>Statistics</p>
+  
+  <label for="min">Min</label>
+  <input id="min" type="checkbox" name="statistics" value="min">
+   
+  <label for="mean">Mean</label>
+  <input id="mean" type="checkbox" name="statistics" value="mean" checked="true">
+  
+  <label for="median">Median</label>
+  <input id="median" type="checkbox" name="statistics" value="median">
+  
+  <label for="max">Max</label>
+  <input id="max" type="checkbox" name="statistics" value="max">
 
   <button type="submit">Download</button>
   
