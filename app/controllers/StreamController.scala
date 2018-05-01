@@ -37,7 +37,7 @@ class StreamController @Inject(
    * lists in urls: ?list=item1,item2 and ?list=item1&list=item2.
    * 2. Convert to ByteString in accordance with Akka.
    */
-  def normalize(in: Seq[String]): Seq[ByteString] = {
+  def normalize(in: Seq[String]): List[ByteString] = {
     in.foldLeft(List[ByteString]()) { _ ++ _.split(",").map(ByteString(_)) }
   }
 
@@ -46,7 +46,7 @@ class StreamController @Inject(
    */
   def getValues(
     key: String, in: Map[String, Seq[String]]
-  ) : Seq[ByteString] = {
+  ) : List[ByteString] = {
     val values = in.get(key)
     values match {
       case Some(values) => normalize(values)
