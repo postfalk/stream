@@ -90,6 +90,33 @@ class StreamControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injecti
     }
   }
 
+ "StreamController POST /stream/" should {
+
+    "return Ok and content-type text/csv" in {
+      implicit lazy val materializer: Materializer = app.materializer
+      val controller = new StreamController(stubControllerComponents())
+      val res = controller.chunkedFromSource()
+        .apply(FakeRequest(POST, "/stream/"))
+      status(res) mustBe OK
+      contentType(res) mustBe Some("text/csv")
+    }
+
+    "be csv" in {
+      implicit lazy val materializer: Materializer = app.materializer
+      val controller = new StreamController(stubControllerComponents())
+      val lines = contentAsString(
+        controller.chunkedFromSource()
+        .apply(FakeRequest(POST,
+          "/stream/?comids=10000042,10000688,10000692"))
+      ).split("\n")
+      lines.length must equal (28513)
+      lines(0) must be ("comid,statistic,variable,year,month,value")
+      lines.foreach((item) => {
+        item.split(",").length must equal (6)
+      })
+    }
+  }
+
   "StreamController monthsFilter" should {
     "filter by months" in {
       val controller = new StreamController(stubControllerComponents())
@@ -160,7 +187,52 @@ class StreamControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injecti
         "months" -> Seq("1","2"))
       controller.filenameFromQuery(complexQuery)
         .must(be(("flow_1042_min_max_estimated_1980_1980_1_2.csv")))
+    }
+  }
 
+  "StreamController normalize" should {
+    "clean queries" in {
+      val controller = new StreamController(stubControllerComponents())
+      val query = Seq("min", "max", "mean, median")
+      val expected = List("min", "max", "mean", "median").map(ByteString(_))
+      controller.normalize(query) must be (expected)
+    }
+  }
+
+  "StreamController getValues" should {
+    "return values from key" in {
+      val controller = new StreamController(stubControllerComponents())
+      val query = Map(
+        "comids" -> Seq("19992,29901"),
+        "variables" -> Seq("p10", "p90"))
+        "begin_year" -> Seq("1990")
+      controller.getValues("comids", query)
+        .must(be((List("19992", "29901").map(ByteString(_)))))
+      controller.getValues("variables", query)
+        .must(be((List("p10", "p90").map(ByteString(_)))))
+      controller.getValues("unsinn", query) must be (List())
+    }
+  }
+
+  "StreamController getLimitedValues" should {
+    "only return values in list" in {
+      val controller = new StreamController(stubControllerComponents())
+      val query = Map(
+        "variables" -> Seq("min", "max", "frogs")
+      )
+      controller.getLimitedValues("variables", query, 
+        List("min", "max", "mean"))
+          .must(be((List("min", "max").map(ByteString(_)))))
+    }
+  }
+
+  "StreamController formatCsvLine" should {
+    "create a CSV line from a list of ByteString" in {
+      val controller = new StreamController(stubControllerComponents())
+      val data = List("1000", "max", "estimated", "1900", "2", "3.0")
+        .map(ByteString(_))
+      controller.formatCsvLine(data)
+        .must(be((ByteString("1000,max,estimated,1900,2,3.0\n"))))
     }
   }
 

@@ -38,15 +38,17 @@ class StreamController @Inject(
    * 2. Convert to ByteString in accordance with Akka.
    */
   def normalize(in: Seq[String]): List[ByteString] = {
-    in.foldLeft(List[ByteString]()) { _ ++ _.split(",").map(ByteString(_)) }
+    in.foldLeft(List[ByteString]()) { 
+      _ ++ _.split(",").map(_.trim()).map(ByteString(_))
+    }
   }
 
   /**
    * Extract query parameters from requests by keyword.
    */
-  def getValues(
-    key: String, in: Map[String, Seq[String]]
-  ) : List[ByteString] = {
+  def getValues(key: String, in: Map[String, Seq[String]]): 
+    List[ByteString] = 
+  {
     val values = in.get(key)
     values match {
       case Some(values) => normalize(values)
@@ -136,11 +138,9 @@ class StreamController @Inject(
     val months = getLimitedValues("months", query,
       (1 until 13).map(_.toString).toList)
 
-    val beginYear = getYearOrDefault("begin_year", query,
-      "1950")
+    val beginYear = getYearOrDefault("begin_year", query, "1950")
 
-    val endYear = getYearOrDefault("end_year", query,
-      "2015")
+    val endYear = getYearOrDefault("end_year", query, "2015")
 
     val filterSwitch = getSwitch(query,
       List("begin_year", "end_year", "months"))
