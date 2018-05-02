@@ -6,7 +6,7 @@ import org.scalatestplus.play._
 import org.scalatestplus.play.guice._
 import play.api.test._
 import play.api.libs.Files
-import play.api.libs.json.Json
+import play.api.libs.json._
 import play.api.test.Helpers._
 import play.api.mvc._
 
@@ -104,12 +104,11 @@ class StreamControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injecti
     "be csv" in {
       implicit lazy val materializer: Materializer = app.materializer
       val controller = new StreamController(stubControllerComponents())
+      val request = FakeRequest(POST, "/stream/")
+        .withFormUrlEncodedBody("comids" -> "10000042,10000688")
       val lines = contentAsString(
-        controller.chunkedFromSource()
-        .apply(FakeRequest(POST,
-          "/stream/?comids=10000042,10000688,10000692"))
-      ).split("\n")
-      lines.length must equal (28513)
+        controller.chunkedFromSource().apply(request)).split("\n")
+      lines.length must equal (19009)
       lines(0) must be ("comid,statistic,variable,year,month,value")
       lines.foreach((item) => {
         item.split(",").length must equal (6)
@@ -233,6 +232,38 @@ class StreamControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injecti
         .map(ByteString(_))
       controller.formatCsvLine(data)
         .must(be((ByteString("1000,max,estimated,1900,2,3.0\n"))))
+    }
+  }
+
+  "StreamController extractQueryFromJson" should {
+    "create a query compatible with the rest of app" in {
+      val controller = new StreamController(stubControllerComponents())
+      val emptyRequest = FakeRequest()
+      controller.extractQueryFromJson(emptyRequest.body.asJson, 
+        List("statistics")) must be (None)
+      val wrongRequest = FakeRequest()
+        .withFormUrlEncodedBody("statistics" -> "min, max")
+      controller.extractQueryFromJson(wrongRequest.body.asJson,
+        List("statistcis")) must be (None)
+      val request = FakeRequest().withJsonBody(
+        Json.parse("""{"statistics": ["min", "max"], "variables": ["p10"]}"""))
+      val result = Option(Map("statistics" -> Seq("min", "max"), 
+        "variables" -> Seq("p10")))
+      controller.extractQueryFromJson(request.body.asJson,
+        List("statistics", "variables"))
+        .must(be((result)))
+    }
+  }
+
+  "StreamController anyJsonTypeToList" should {
+    "convert JsValues" in {
+      val controller = new StreamController(stubControllerComponents())
+      controller.anyJsonTypeToList(JsNumber(2)) must be (List("2"))
+      controller.anyJsonTypeToList(JsString("2")) must be (List("2"))
+      controller.anyJsonTypeToList(JsArray(IndexedSeq(JsNumber(2), JsNumber(3))))
+        .must(be((List("2", "3"))))
+      controller
+        .anyJsonTypeToList(JsArray(IndexedSeq(JsString("2"), JsString("3"))))
     }
   }
 

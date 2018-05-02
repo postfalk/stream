@@ -3,8 +3,9 @@ package controllers
 import java.net.URLDecoder
 import javax.inject.Inject
 import java.nio.file.{Paths, NoSuchFileException}
+import play.api.libs.json.{Json, JsValue, JsNumber, JsString, JsArray, JsNull}
 import play.api.mvc.{
-  Request, AnyContent, AnyContentAsEmpty, AnyContentAsText,
+  Request, AnyContent, AnyContentAsEmpty, AnyContentAsJson,
   AbstractController, ControllerComponents}
 import play.core.parsers.FormUrlEncodedParser
 import akka.NotUsed
@@ -112,6 +113,32 @@ class StreamController @Inject(
     partList.map(_.utf8String.trim()).mkString("_") ++ ".csv"
   }
 
+  def anyJsonTypeToList(in: JsValue): List[String] = {
+    in match {
+      case _:JsNumber => { List(in.toString) }
+      case _:JsString => { List(in.as[String]) }
+      case _:JsArray => { 
+        in.as[JsArray].value.map(anyJsonTypeToList _)
+          .toList.map(_.head)
+      }
+      case _ => { List() }
+    }
+  }
+
+  def extractQueryFromJson(json: Option[JsValue], allowed: List[String]):
+    Option[Map[String, Seq[String]]] = {
+      json match {
+        case None => None: Option[Map[String, Seq[String]]]
+        case Some(json) => {
+          val tuples = allowed.map(
+            (item) => { (item, anyJsonTypeToList((json \ item)
+              .asOpt[JsValue].getOrElse(JsNull))) })
+          val map = tuples.toMap
+          Some(map)
+        }
+      }
+  }
+
   /**
    * A play view that streams CSV data from file to download and applying
    * filters.
@@ -120,10 +147,16 @@ class StreamController @Inject(
 
     implicit request: Request[AnyContent] =>
 
+    val allowedParams = List("comids", "statistics", "variables", "begin_year",
+      "end_year", "months")
+
+    val json = extractQueryFromJson(request.body.asJson, allowedParams)
+
     /**
-     * Check for POST data, use GET data if not available
+     * Check for POST data, use URL query parameters if not available
      */
-    val query = request.body.asFormUrlEncoded.getOrElse(request.queryString)
+    val query = json.getOrElse(
+      request.body.asFormUrlEncoded.getOrElse(request.queryString))
 
     val outputFilename = filenameFromQuery(query)
 
