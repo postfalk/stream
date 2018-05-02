@@ -40,9 +40,10 @@ The endpoint for the API v2 is
 https://rivers.codefornature.org/api/v2/stream/. 
 
 Currently, the only available response Content-type is ```text/csv```. 
-Transfer-encoding is ```chunked```. Additional content-types could be added as needed 
+Transfer-encoding is ```chunked```. Additional Content-types could be added
 as long as they support chunked transfer (pure JSON does not since it requires a 
 root block, for alternatives see https://en.wikipedia.org/wiki/JSON_streaming).
+The response will be compressed (```Content-encoding: gzip;```).
 
 Typing the URL into the address bar of a web browser will trigger a download. 
 
