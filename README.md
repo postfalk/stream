@@ -39,8 +39,8 @@ by comid and including all variables) will take about and hour and yields
 The endpoint for the API v2 is 
 https://rivers.codefornature.org/api/v2/stream/. 
 
-Currently, the only available Content-type is ```text/csv```. Transfer-encoding 
-is ```chunked```. Additional content-types could be added as needed 
+Currently, the only available response Content-type is ```text/csv```. 
+Transfer-encoding is ```chunked```. Additional content-types could be added as needed 
 as long as they support chunked transfer (pure JSON does not since it requires a 
 root block, for alternatives see https://en.wikipedia.org/wiki/JSON_streaming).
 
@@ -106,14 +106,15 @@ https://rivers.codefornature.org/api/v2/stream/?comids=10000042&variables=estima
 
 ## POST requests
 
-GET requests are limited to 2047 characters that can be presented in URLs. 
+GET requests are limited by the 2047 characters that can be represented in an URLs. 
 Many use cases may exceed this limit, e.g. getting all stream segments for 
 an entire watershed. In that case the data can be downloaded via a POST request 
 with the query data in the body. 
 
-Currently, the Content-type ```application/x-www-form-urlencoded``` is required. 
-This is the default when requested from html forms. The query schema is identical 
-to GET requests.
+Currently, the Content-types ```application/x-www-form-urlencoded``` and ```application/json```
+are supported. ```application/x-www-form-urlencoded```  is the default and can be requested 
+from html forms (without the ```enctype``` attribute). 
+The query schema is identical to GET requests.
 
 Since the response Content-type is ```text/csv``` a form submissions in which the 
 ```action``` attribute is set to the url will trigger a download dialogue 
@@ -149,7 +150,31 @@ An example download form could look like this:
   
 </form>
 
+```
 
+If POST requests are submitted with ```Content-type: application/json;``` the request body 
+might look like this:
+
+```json
+{
+    "comids": [
+        10000042, 
+        10000688
+     ],
+     "statistics": [
+         "min", 
+         "max"
+     ],
+     "variables": [
+         "estimated"
+     ],
+     "begin_year": 1980,
+     "end_year": 1981,
+     "months": [
+          1,
+          2
+     ]
+}
 ```
 
 ## A note on speed
