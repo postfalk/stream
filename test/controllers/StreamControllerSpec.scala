@@ -246,7 +246,8 @@ class StreamControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injecti
       controller.extractQueryFromJson(wrongRequest.body.asJson,
         List("statistcis")) must be (None)
       val request = FakeRequest().withJsonBody(
-        Json.parse("""{"statistics": ["min", "max"], "variables": ["p10"]}"""))
+        Json.parse(
+          """{"statistics": ["min", "max"], "variables": ["p10"]}"""))
       val result = Option(Map("statistics" -> Seq("min", "max"), 
         "variables" -> Seq("p10")))
       controller.extractQueryFromJson(request.body.asJson,
@@ -260,7 +261,8 @@ class StreamControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injecti
       val controller = new StreamController(stubControllerComponents())
       controller.anyJsonTypeToList(JsNumber(2)) must be (List("2"))
       controller.anyJsonTypeToList(JsString("2")) must be (List("2"))
-      controller.anyJsonTypeToList(JsArray(IndexedSeq(JsNumber(2), JsNumber(3))))
+      controller.anyJsonTypeToList(
+        JsArray(IndexedSeq(JsNumber(2), JsNumber(3))))
         .must(be((List("2", "3"))))
       controller
         .anyJsonTypeToList(JsArray(IndexedSeq(JsString("2"), JsString("3"))))
