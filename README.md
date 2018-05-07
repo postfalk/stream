@@ -16,7 +16,7 @@ memory overruns, manifesting themselves in HTTP 500 and 502 errors.
 The version 2 of the flow data API splits querying into two separate phases:
 
 1. An API that allows for querying stream segments by NHDv2 attributes, e.g.
-comids, river name, geography, stream order, gauging, etc. Version 1 or any
+comids (unique ID for each stream segment), river name, geography, stream order, gauging, etc. Version 1 or any
 GIS layer containing comids can serve this purpose.
 
 2. An API that supports filtering of the Natural Flow dataset created by
@@ -33,7 +33,7 @@ allowing for streaming and filtering of the entire dataset without
 timeouts or memory overruns. 
 
 A complete scan/download of the Natural Flow dataset (not subsetted 
-by comid and including all variables) will take about and hour and yields 
+by comid and including all variables) will take about an hour and yields 
 ~ 1 billion records and 47 Gbyte of data. 
 
 The endpoint for the API v2 is 
@@ -61,7 +61,23 @@ https://s3.amazonaws.com/rivers.codefornature.org/index.html
 
 ## Variables in the dataset
 
-(Coming soon)
+Allowed values for ```variables``` are ```estimated```, ```p10```,
+```p90```, ```observed```.
+
+```estimated``` is the predicted natural or unimpaired flow in cubic feet per second based on the mean of 1,000 predictions from the random forest models.  
+```p10``` is the lower confidence bound of natural or unimpaired flow in cubic feet per second based on the 10th percentile of 1,000 predictions from the random forest models.  
+```p90``` is the upper confidence bound of natural or unimpaired flow in cubic feet per second based on the 90th percentile of 1,000 predictions from the random forest models. 
+```observed``` is the measured flow in cubic feet per second based measurements taken at stream gages managed by the U.S. Geological Survey.  Observed data is only available for the subset of stream segments with active or historical stream gages.
+
+## Statistics in the dataset
+
+Allowed values for ```statistics``` are ```max```, ```mean```,
+```median```, ```min```.
+
+```max``` is the maximum of daily flows for a given month (for observed data, months with <20 daily flows were excluded)
+```mean``` is the mean of daily flows for a given month.  
+```median``` is the median of daily flows for a given month. 
+```min``` is the minimum of daily flows for a given month (for observed data, months with <20 daily flows were excluded)
 
 ## Query schema: GET requests
 
