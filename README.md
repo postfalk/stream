@@ -3,11 +3,11 @@
 ## Introduction
 
 The Natural Flow API v1 (https://rivers.codefornature.org/) is well suited
-for complex queries with a limited number of returned records. However, we 
+for complex queries with a limited number of returned records. However, we
 ran into two major challenges.
 
 1. The (MongoDb-based) query schema is cumbersome, the combined use of queries
-and projection is very flexible but turned out to be too complicated for 
+and projection is very flexible but turned out to be too complicated for
 non-coding users.
 
 2. Queries with a large number of returned records run into time-outs and
@@ -27,34 +27,34 @@ statistics, variables, years, and months.
 The decision to keep the two datasets (NHDv2 and USGS/TNC Natural Flows)
 separate guarantees a cleaner and more performative API.
 
-API v2 uses [Scala](https://www.scala-lang.org/), 
-[Play](https://www.playframework.com/), and [Akka](https://akka.io/) 
-allowing for streaming and filtering of the entire dataset without 
-timeouts or memory overruns. 
+API v2 uses [Scala](https://www.scala-lang.org/),
+[Play](https://www.playframework.com/), and [Akka](https://akka.io/)
+allowing for streaming and filtering of the entire dataset without
+timeouts or memory overruns.
 
-A complete scan/download of the Natural Flow dataset (not subsetted 
-by comid and including all variables) will take about an hour and yields 
-~ 1 billion records and 47 Gbyte of data. 
+A complete scan/download of the Natural Flow dataset (not subsetted
+by comid and including all variables) will take about an hour and yields
+~ 1 billion records and 47 Gbyte of data.
 
-The endpoint for the API v2 is 
-https://rivers.codefornature.org/api/v2/stream/. 
+The endpoint for the API v2 is
+https://rivers.codefornature.org/api/v2/stream/.
 
-Currently, the only available response Content-type is ```text/csv```. 
+Currently, the only available response Content-type is ```text/csv```.
 Transfer-encoding is ```chunked```. Additional Content-types could be added
-as long as they support chunked transfer (pure JSON does not since it requires a 
+as long as they support chunked transfer (pure JSON does not since it requires a
 root block, for alternatives see https://en.wikipedia.org/wiki/JSON_streaming).
 The response will be compressed (```Content-encoding: gzip;```).
 
-Typing the URL into the address bar of a web browser will trigger a download. 
+Typing the URL into the address bar of a web browser will trigger a download.
 
-Since the data will be streamed, the overall size of the download will be unknown 
-until finished. Nevertheless, the relatively uniform length of records allows for 
+Since the data will be streamed, the overall size of the download will be unknown
+until finished. Nevertheless, the relatively uniform length of records allows for
 reasonable estimates.
 
 ## Outlook
 
 A web application will serve as interface. An typical example workflow could be:
-A user selects a list of stream segments (comids) by clicking on a watershed and 
+A user selects a list of stream segments (comids) by clicking on a watershed and
 then download a dataset for that selection. For a prototype see
 
 https://s3.amazonaws.com/rivers.codefornature.org/index.html
@@ -66,7 +66,7 @@ Allowed values for ```variables``` are ```estimated```, ```p10```,
 
 ```estimated``` is the predicted natural or unimpaired flow in cubic feet per second based on the mean of 1,000 predictions from the random forest models.  
 ```p10``` is the lower confidence bound of natural or unimpaired flow in cubic feet per second based on the 10th percentile of 1,000 predictions from the random forest models.  
-```p90``` is the upper confidence bound of natural or unimpaired flow in cubic feet per second based on the 90th percentile of 1,000 predictions from the random forest models. 
+```p90``` is the upper confidence bound of natural or unimpaired flow in cubic feet per second based on the 90th percentile of 1,000 predictions from the random forest models.
 ```observed``` is the measured flow in cubic feet per second based measurements taken at stream gages managed by the U.S. Geological Survey.  Observed data is only available for the subset of stream segments with active or historical stream gages.
 
 ## Statistics in the dataset
@@ -76,7 +76,7 @@ Allowed values for ```statistics``` are ```max```, ```mean```,
 
 ```max``` is the maximum of daily flows for a given month (for observed data, months with <20 daily flows were excluded)
 ```mean``` is the mean of daily flows for a given month.  
-```median``` is the median of daily flows for a given month. 
+```median``` is the median of daily flows for a given month.
 ```min``` is the minimum of daily flows for a given month (for observed data, months with <20 daily flows were excluded)
 
 ## Query schema: GET requests
@@ -123,63 +123,63 @@ https://rivers.codefornature.org/api/v2/stream/?comids=10000042&variables=estima
 
 ## POST requests
 
-GET requests are limited by the 2047 characters that can be represented in an URLs. 
-Many use cases may exceed this limit, e.g. getting all stream segments for 
-an entire watershed. In that case the data can be downloaded via a POST request 
-with the query data in the body. 
+GET requests are limited by the 2047 characters that can be represented in an URLs.
+Many use cases may exceed this limit, e.g. getting all stream segments for
+an entire watershed. In that case the data can be downloaded via a POST request
+with the query data in the body.
 
 Currently, the Content-types ```application/x-www-form-urlencoded``` and ```application/json```
-are supported. ```application/x-www-form-urlencoded```  is the default and can be requested 
-from html forms (without the ```enctype``` attribute). 
+are supported. ```application/x-www-form-urlencoded```  is the default and can be requested
+from html forms (without the ```enctype``` attribute).
 The query schema is identical to GET requests.
 
-Since the response Content-type is ```text/csv``` a form submissions in which the 
-```action``` attribute is set to the url will trigger a download dialogue 
-(tested in Chrome and Firefox). 
+Since the response Content-type is ```text/csv``` a form submissions in which the
+```action``` attribute is set to the url will trigger a download dialogue
+(tested in Chrome and Firefox).
 
 An example download form could look like this:
 
 ```html
 
-<form action="https://rivers.codefornature.org/v2/stream/" method="post">
-  
-  <!-- Use type=hidden for values preselected by app interactions --> 
+<form action="https://rivers.codefornature.org/api/v2/stream/" method="post">
+
+  <!-- Use type=hidden for values preselected by app interactions -->
   <input type="hidden" name="comids" value="10000042,10000688">
-  
+
   <!-- Use same name (not id!) for multiple choice -->
   <span>Statistics:</span>
-  
+
   <label for="min">Min</label>
   <input id="min" type="checkbox" name="statistics" value="min">
-   
+
   <label for="mean">Mean</label>
   <input id="mean" type="checkbox" name="statistics" value="mean" checked="true">
-  
+
   <label for="median">Median</label>
   <input id="median" type="checkbox" name="statistics" value="median">
-  
+
   <label for="max">Max</label>
   <input id="max" type="checkbox" name="statistics" value="max">
-  
+
   <!-- add additional fields here -->
-  
+
   <button type="submit">Download</button>
-  
+
 </form>
 
 ```
 
-If POST requests are submitted with ```Content-type: application/json;``` the request body 
+If POST requests are submitted with ```Content-type: application/json;``` the request body
 might look like this:
 
 ```json
 {
     "comids": [
-        10000042, 
+        10000042,
         10000688
      ],
      "statistics": [
-         "min", 
+         "min",
          "max"
      ],
      "variables": [
@@ -199,7 +199,7 @@ might look like this:
 The data is stored in partioned CSV files on the filesystem.
 The first three query parameters ```comids```, ```statistics``` and
 ```variables``` will determine how many of the roughly 600,000 files
-will be scanned by the application. 
+will be scanned by the application.
 
 The use of the parameters years and months doesn't influence the
 overall download much time since entire files have to be scanned
@@ -217,5 +217,5 @@ the absence or presence of observed data) which means that only about
 1. Some ```offset``` and ```limit``` parameters for paginated downloads.
 2. Support additional Content-types for POST (```application/json```. ```text/plain```)
 3. Experiment with Apache Kafka, Parquet, and compression for better, cheaper,
-and faster data storage. 
+and faster data storage.
 4. Re-implement ```years```
