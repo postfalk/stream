@@ -1,4 +1,5 @@
 name := """stream"""
+
 organization := "org.tnc.casoftwaredev"
 
 version := "0.4-SNAPSHOT"
