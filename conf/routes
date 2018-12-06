@@ -6,6 +6,8 @@
 # An example controller showing a sample home page
 GET     /                           controllers.HomeController.index
 
+GET    /databasetest/               controllers.DatabaseController.index
+
 #
 GET    /stream/                     controllers.StreamController.chunkedFromSource
 
