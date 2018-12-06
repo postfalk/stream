@@ -23,15 +23,28 @@ class StreamController @Inject(
   ) (cc: ControllerComponents) extends AbstractController(cc) {
 
   def yearsFilter(in: List[ByteString], begin: String, end: String):
-  Boolean = {
-    val checkThisOne = in(3).utf8String
-    begin <= checkThisOne && end >= checkThisOne
-  }
+    Boolean = {
+      val checkThisOne = in(3).utf8String
+      begin <= checkThisOne && end >= checkThisOne
+    }
 
   def monthsFilter(in: List[ByteString], monthsList: List[ByteString]):
     Boolean = {
       monthsList.foldLeft(false) {_ || in(4) == _}
     }
+
+  /**
+   * Decide whether there is a valid comid list or whether no limiting list
+   * is provided. This prevents incidental download of the entire dataset when
+   * API endpoint is requested.
+   */
+  def comidsListFilter(in: Map[String, Seq[String]]):Boolean = {
+    var ret = false
+    if (in.keySet.exists(_ == "comids")) {
+      ret = in("comids")(0) == "0"
+    }
+    ret
+  }
 
   /**
    * 1. Normalize query parameters to deal with different representations of
@@ -59,7 +72,7 @@ class StreamController @Inject(
 
   /**
    * Get switch from query parameters and decide whether stream should pass
-   * filterFlow.
+   * filterFlow
    */
   def getSwitch(in: Map[String, Seq[String]], lst: List[String]): Boolean = {
     lst.foldLeft(false)(_ || !getValues(_, in).isEmpty)
@@ -239,7 +252,13 @@ class StreamController @Inject(
         .fromPath(Paths.get("pdump/index.csv"))
         .via(CsvParsing.lineScanner()).map(_(0).utf8String)
 
-      val merge = builder.add(Merge[ByteString](3))
+      /** Not sure whether that is the most elegant way to switch between 
+       *  sources but works for now.
+       */
+      val source = if (comidsListFilter(query))
+        { source2 } else { source1 }
+
+      val merge = builder.add(Merge[ByteString](2))
 
       /**
        * Use Partition to circumvent filter function if no filter values
@@ -251,11 +270,9 @@ class StreamController @Inject(
       /**
        * Assemble the flow
        */
-      source1 ~> fileFlow ~> filterFlow ~> merge.in(0)
-      source2.filter(_ => comidList.isEmpty) ~> fileFlow ~> partition.in
-      partition.out(0) ~> filterFlow ~> merge.in(1)
-      partition.out(1) ~> merge.in(2)
-
+      source ~> fileFlow ~> partition.in
+      partition.out(0) ~> filterFlow ~> merge.in(0)
+      partition.out(1) ~> merge.in(1)
       SourceShape(merge.out)
     })
 
