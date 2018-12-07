@@ -19,11 +19,11 @@ class UserDAO @Inject() (
 
     def insert(user: User): Future[Unit] = db.run(Users += user).map { _ => () }
 
-    private class UsersTable(tag: Tag) extends Table[User](tag, "USERS") {
+    private class UsersTable(tag: Tag) extends Table[User](tag, "users") {
 
-      def id = column[Int]("ID", O.PrimaryKey)
-      def name = column[String]("NAME")
-      def token = column[String]("TOKEN")
+      def id = column[Int]("id", O.PrimaryKey)
+      def name = column[String]("name")
+      def token = column[String]("token")
 
       def * = (id, name, token) <> (User.tupled, User.unapply)
 
