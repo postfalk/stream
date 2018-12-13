@@ -2,7 +2,7 @@ name := """stream"""
 
 organization := "org.tnc.casoftwaredev"
 
-version := "0.4-SNAPSHOT"
+version := "0.5-SNAPSHOT"
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
