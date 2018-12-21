@@ -11,17 +11,24 @@ import slick.jdbc.PostgresProfile.api._
 
 class UserDAO @Inject() (
   protected val dbConfigProvider: DatabaseConfigProvider) (
-  implicit ec: ExecutionContext) extends HasDatabaseConfigProvider[JdbcProfile] {
+  implicit ec: ExecutionContext) 
+  extends HasDatabaseConfigProvider[JdbcProfile] {
 
     import profile.api._
 
     private val Users = TableQuery[UsersTable]
 
-    def insert(user: User): Future[Unit] = db.run(Users += user).map { _ => () }
+    val insertQuery = Users
+      .returning(Users.map(_.id))
+      .into((item, id) => item.copy(id = id))
 
-    private class UsersTable(tag: Tag) extends Table[User](tag, "users") {
+    def insert(user: User): Future[User] = db
+      .run(insertQuery += user)
+      .map({ result => result })
 
-      def id = column[Int]("id", O.PrimaryKey)
+    class UsersTable(tag: Tag) extends Table[User] (tag, "users") {
+
+      def id = column[Int]("id", O.PrimaryKey, O.AutoInc)
       def name = column[String]("name")
       def token = column[String]("token")
 

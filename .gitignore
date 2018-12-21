@@ -10,3 +10,4 @@ pdump
 /RUNNING_PID
 *.class
 *.log
+.DS_Store

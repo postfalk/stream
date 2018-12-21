@@ -19,15 +19,16 @@ class DatabaseController @Inject() (
   userDao: UserDAO,
   protected val dbConfigProvider: DatabaseConfigProvider,
   cc: ControllerComponents
-)(implicit ec: ExecutionContext)
-    extends AbstractController(cc) 
+) (implicit ec: ExecutionContext)
+    extends AbstractController(cc)
     with HasDatabaseConfigProvider[JdbcProfile] {
 
-  val user = User(2, "Falk", "token")
-  Await.result(userDao.insert(user), Duration.Inf)
+  def index() = Action { implicit request: Request[AnyContent]  =>
 
-  def index() = Action { implicit request: Request[AnyContent]  => 
-    Ok("hello")
+    val user = User(0, "Test", "token")
+    val returned = Await.result(userDao.insert(user), Duration.Inf)
+
+    Ok(returned.id.toString)
   }
 
 }
