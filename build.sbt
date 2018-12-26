@@ -17,10 +17,10 @@ libraryDependencies += "com.typesafe.akka" %% "akka-stream" % "2.5.11"
 libraryDependencies += "com.lightbend.akka" %% "akka-stream-alpakka-csv" % "0.18"
 libraryDependencies += "com.lightbend.akka" %% "akka-stream-alpakka-s3" % "0.18"
 libraryDependencies += "com.typesafe.akka" %% "akka-testkit" % "2.5.11"
-libraryDependencies ++= Seq(
-  "com.typesafe.play" %% "play-slick" % "3.0.0",
-  "com.typesafe.play" %% "play-slick-evolutions" % "3.0.0"
-)
+//libraryDependencies ++= Seq(
+//  "com.typesafe.play" %% "play-slick" % "3.0.0",
+//  "com.typesafe.play" %% "play-slick-evolutions" % "3.0.0"
+//)
 //TwirlKeys.templateImports += "com.example.controllers._"
 
 // Adds additional packages into conf/routes
