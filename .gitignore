@@ -1,7 +1,12 @@
+data
 logs
+
+pdump/*
+!pdump/10000042/
+!pdump/10000688/
+!pdump/10000692/
+
 target
-dump
-pdump
 /.idea
 /.idea_modules
 /.classpath
@@ -10,3 +15,4 @@ pdump
 /RUNNING_PID
 *.class
 *.log
+.DS_Store

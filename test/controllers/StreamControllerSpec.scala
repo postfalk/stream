@@ -2,6 +2,9 @@ package controllers
 
 import scala.concurrent.duration.Duration
 
+import play.api.Application
+import org.scalatest.TestData
+
 import org.scalatestplus.play._
 import org.scalatestplus.play.guice._
 import play.api.test._
@@ -14,8 +17,13 @@ import scala.concurrent._
 import akka.stream.Materializer
 import akka.util._
 
+import test.fakeApp
 
-class StreamControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injecting with Results {
+class StreamControllerSpec extends PlaySpec
+  with GuiceOneAppPerTest with Injecting with Results
+{
+
+  override def newAppForTest(testData: TestData): Application = fakeApp
 
   "StreamController GET /stream/" should {
 
@@ -41,6 +49,16 @@ class StreamControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injecti
       lines.foreach((item) => {
         item.split(",").length must equal (6)
       })
+    }
+
+    "be also csv using GET with router" in {
+      implicit lazy val materializer: Materializer = app.materializer      
+      val request = FakeRequest(GET, "/stream/")
+      val stream = route(app, request).get
+      status(stream) mustBe OK
+      contentType(stream) mustBe Some("text/csv")
+      contentAsString(stream) must include(
+        "comid,statistic,variable,year,month,value")
     }
 
     "filter according to schema" in {
@@ -114,6 +132,17 @@ class StreamControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injecti
         item.split(",").length must equal (6)
       })
     }
+
+    "be also csv using router" in {
+      implicit lazy val materializer: Materializer = app.materializer
+      val request = FakeRequest(POST, "/stream/")
+      val stream = route(app, request).get
+      status(stream) mustBe OK
+      contentType(stream) mustBe Some("text/csv")
+      contentAsString(stream) must include(
+        "comid,statistic,variable,year,month,value")
+    }
+
   }
 
   "StreamController monthsFilter" should {
