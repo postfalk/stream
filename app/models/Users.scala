@@ -11,7 +11,6 @@ import db.DbContext
  */
 case class User(id: Long, name: String, is_active: Boolean)
 
-
 /**
  * Users DAO (no need to create another file for now)
  */

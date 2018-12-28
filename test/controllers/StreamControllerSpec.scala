@@ -16,13 +16,10 @@ import play.api.test.Helpers._
 import akka.stream.Materializer
 import akka.util.ByteString
 
-// import test.fakeApp
 
 class StreamControllerSpec extends PlaySpec
   with GuiceOneAppPerTest with Injecting
 {
-
-  // override def newAppForTest(testData: TestData): Application = fakeApp
 
   "StreamController GET /stream/" should {
 

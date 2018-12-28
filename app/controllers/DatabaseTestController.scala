@@ -14,12 +14,12 @@ import models.{ User, Users }
 
 @Singleton
 class DatabaseTestController @Inject() (
-  cc: ControllerComponents, userServices: Users)
+  cc: ControllerComponents, userService: Users)
   extends AbstractController(cc)
 {
-  def get() = Action { implicit request: Request[AnyContent] => 
+  def get() = Action { implicit request: Request[AnyContent] =>
     Ok(
-      userServices.create(User(0, "Falk", true)).id.toString
+      userService.create(User(0, "Falk", true)).id.toString
     )
   }
 }

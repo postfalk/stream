@@ -22,7 +22,7 @@ libraryDependencies ++= Seq(
   "org.postgresql" % "postgresql" % "42.1.1",
   "io.getquill" %% "quill-jdbc" % "2.6.0"
 )
-
+javaOptions in Test += "-Dconfig.file=conf/application.test.conf"
 //TwirlKeys.templateImports += "com.example.controllers._"
 
 // Adds additional packages into conf/routes
