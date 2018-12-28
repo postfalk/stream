@@ -1,8 +1,8 @@
 # Users schema
 
 # --- !Ups
-CREATE TABLE Users (
-    id INTEGER PRIMARY KEY,
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     is_active BOOLEAN NOT NULL
 );

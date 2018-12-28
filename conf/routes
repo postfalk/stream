@@ -12,5 +12,7 @@ GET    /stream/                     controllers.StreamController.chunkedFromSour
 #
 POST   /stream/                     controllers.StreamController.chunkedFromSource
 
+GET    /databasetest/               controllers.DatabaseTestController.get
+
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)

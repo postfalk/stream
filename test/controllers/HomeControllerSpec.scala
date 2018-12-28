@@ -8,7 +8,7 @@ import org.scalatestplus.play.guice._
 import play.api.test._
 import play.api.test.Helpers._
 
-import test.fakeApp
+// import test.fakeApp
 
 /**
  * Add your spec here.
@@ -17,8 +17,6 @@ import test.fakeApp
  * For more information, see https://www.playframework.com/documentation/latest/ScalaTestingWithScalaTest
  */
 class HomeControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injecting {
-
-  override def newAppForTest(testData: TestData): Application = fakeApp
 
   "HomeController GET" should {
 
