@@ -23,4 +23,7 @@ class Users @Inject() (val db: DbContext) {
   def create(user: User) = user.copy(
     id = run(users.insert(lift(user)).returning(_.id)))
 
+  def retrieve(id: Long) = run(
+    users.filter(p=>p.id==lift(id))).headOption
+
 }

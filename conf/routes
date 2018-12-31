@@ -6,11 +6,11 @@
 # An example controller showing a sample home page
 GET     /                           controllers.HomeController.index
 
-#
 GET    /stream/                     controllers.StreamController.chunkedFromSource
 
-#
 POST   /stream/                     controllers.StreamController.chunkedFromSource
+
+GET    /users/:id/                  controllers.UsersController.get(id:Integer)
 
 GET    /databasetest/               controllers.DatabaseTestController.get
 
