@@ -16,3 +16,6 @@ target
 *.class
 *.log
 .DS_Store
+
+# etc
+__pycache__
