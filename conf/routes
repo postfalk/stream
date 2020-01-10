@@ -8,7 +8,8 @@ GET     /                           controllers.HomeController.index
 GET    /stream/                     controllers.StreamController.chunkedFromSource
 POST   /stream/                     controllers.StreamController.chunkedFromSource
 # Natural flows functional flow controllers
-GET    /functional/                 controllers.FunctionalController.get
+GET    /ffm/                        controllers.FunctionalController.chunkedFromSource
+POST   /ffm/                        controllers.FunctionalController.chunkedFromSource
 # Experimental user controller
 GET    /users/:id/                  controllers.UsersController.get(id:Integer)
 # Database test

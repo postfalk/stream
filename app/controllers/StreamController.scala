@@ -20,80 +20,31 @@ import akka.stream.alpakka.csv.scaladsl.CsvParsing
  *  filters.
  */
 class StreamController @Inject(
-  ) (cc: ControllerComponents) extends AbstractController(cc) {
+  ) (cc: ControllerComponents) 
+  extends AbstractController(cc) with APIController {
 
+  val allowedParams = List("comids", "statistics", "variables", "begin_year",
+    "end_year", "months")
+  val csvHeaderLine = "comid,statistic,variable,year,month,value\n"
+  val dataDirectory = "pdump/"
+
+  /**
+   *  Years filter is specific to StreamController
+   */
   def yearsFilter(in: List[ByteString], begin: String, end: String):
     Boolean = {
       val checkThisOne = in(3).utf8String
       begin <= checkThisOne && end >= checkThisOne
     }
 
+  /**
+   *  Month filter is specific to StreamController albeit it might work
+   *  as special case of a more general filter class
+   */
   def monthsFilter(in: List[ByteString], monthsList: List[ByteString]):
     Boolean = {
       monthsList.foldLeft(false) {_ || in(4) == _}
     }
-
-  /**
-   * Decide whether there is a valid comid list or whether no limiting list
-   * is provided. This prevents incidental download of the entire dataset when
-   * API endpoint is requested.
-   */
-  def comidsListFilter(in: Map[String, Seq[String]]):Boolean = {
-    var ret = false
-    if (in.keySet.exists(_ == "comids")) {
-      ret = in("comids")(0) == "0"
-    }
-    ret
-  }
-
-  /**
-   * 1. Normalize query parameters to deal with different representations of
-   * lists in urls: ?list=item1,item2 and ?list=item1&list=item2.
-   * 2. Convert to ByteString in accordance with Akka.
-   */
-  def normalize(in: Seq[String]): List[ByteString] = {
-    in.foldLeft(List[ByteString]()) { 
-      _ ++ _.split(",").map(_.trim()).map(ByteString(_))
-    }
-  }
-
-  /**
-   * Extract query parameters from requests by keyword.
-   */
-  def getValues(key: String, in: Map[String, Seq[String]]): 
-    List[ByteString] = 
-  {
-    val values = in.get(key)
-    values match {
-      case Some(values) => normalize(values)
-      case None => List()
-    }
-  }
-
-  /**
-   * Get switch from query parameters and decide whether stream should pass
-   * filterFlow
-   */
-  def getSwitch(in: Map[String, Seq[String]], lst: List[String]): Boolean = {
-    lst.foldLeft(false)(_ || !getValues(_, in).isEmpty)
-  }
-
-  /**
-   * Limit values extracted from query parameters by a default list. Extend to
-   * allowed options if parameter is not present or has no value after equals
-   * sign.
-   */
-  def getLimitedValues(
-    key: String, in: Map[String, Seq[String]], allowed: List[String]
-  ) : List[ByteString] = {
-    val ret = getValues(key, in)
-    val opts = allowed.map(ByteString(_))
-    if (ret.isEmpty || ret(0).isEmpty) {
-      opts.toList
-    } else {
-      ret.filter(opts contains _).toList
-    }
-  }
 
   /**
    *  Check whether input is a valid year and return default if empty
@@ -105,16 +56,10 @@ class StreamController @Inject(
   }
 
   /**
-   * Format CSV output stream
-   */
-  def formatCsvLine(lst: List[ByteString]): ByteString = {
-    lst.reduce(_ ++ ByteString(",") ++ _) ++ ByteString("\n")
-  }
-
-  /**
    * Create a default filename from what we have
    */
-  def filenameFromQuery(query: Map[String, Seq[String]]): String = {
+  def filenameFromRequest(request: Request[AnyContent]): String = {
+    val query = getQuery(request)
     val comids = getValues("comids", query).take(5)
     val statistics = getValues("statistics", query)
     val variables = getValues("variables", query)
@@ -126,54 +71,8 @@ class StreamController @Inject(
     partList.map(_.utf8String.trim()).mkString("_") ++ ".csv"
   }
 
-  def anyJsonTypeToList(in: JsValue): List[String] = {
-    in match {
-      case _:JsNumber => { List(in.toString) }
-      case _:JsString => { List(in.as[String]) }
-      case _:JsArray => { 
-        in.as[JsArray].value.map(anyJsonTypeToList _)
-          .toList.map(_.head)
-      }
-      case _ => { List() }
-    }
-  }
-
-  def extractQueryFromJson(json: Option[JsValue], allowed: List[String]):
-    Option[Map[String, Seq[String]]] = {
-      json match {
-        case None => None: Option[Map[String, Seq[String]]]
-        case Some(json) => {
-          val tuples = allowed.map(
-            (item) => { (item, anyJsonTypeToList((json \ item)
-              .asOpt[JsValue].getOrElse(JsNull))) })
-          val map = tuples.toMap
-          Some(map)
-        }
-      }
-  }
-
-  /**
-   * A play view that streams CSV data from file to download and applying
-   * filters.
-   */
-  def chunkedFromSource() = Action {
-
-    implicit request: Request[AnyContent] =>
-
-    val allowedParams = List("comids", "statistics", "variables", "begin_year",
-      "end_year", "months")
-
-    val json = extractQueryFromJson(request.body.asJson, allowedParams)
-
-    /**
-     * Check for POST data, use URL query parameters if not available
-     */
-    val query = json.getOrElse(
-      request.body.asFormUrlEncoded.getOrElse(request.queryString))
-
-    val outputFilename = filenameFromQuery(query)
-
-    val csvHeaderLine = "comid,statistic,variable,year,month,value\n"
+  def sourceFactory(query: Map[String, Seq[String]]): 
+    Source[ByteString, NotUsed] = {
 
     val statistics = getLimitedValues("statistics", query,
       List("max", "min", "mean", "median"))
@@ -212,7 +111,7 @@ class StreamController @Inject(
       .flatMapConcat({
         inValue =>
           FileIO.fromPath(
-            Paths.get("pdump/", inValue(0),  "/", inValue(1), "/", 
+            Paths.get(dataDirectory, inValue(0),  "/", inValue(1), "/", 
               inValue(2) + ".csv"))
           /**
            *  .recover catches NoSuchFileException and passes an empty
@@ -234,7 +133,7 @@ class StreamController @Inject(
       .filter(monthsFilter(_, months))
       .map(formatCsvLine)
 
-    val source = Source.fromGraph(GraphDSL.create() {
+    Source.fromGraph(GraphDSL.create() {
       implicit builder =>
         import GraphDSL.Implicits._
 
@@ -275,20 +174,24 @@ class StreamController @Inject(
       partition.out(1) ~> merge.in(1)
       SourceShape(merge.out)
     })
+  }
 
-    /**
-     * Add CSV header and sink entire flow to chunked HTTP response using Play
-     * framework
-     */
-    val header = Source(List(ByteString(csvHeaderLine)))
-    val csvSource = Source
-      .combine(
-        header:Source[ByteString, NotUsed], 
-        source:Source[ByteString, NotUsed])(Concat(_))
-    Ok.chunked(csvSource)
+  /**
+   * A play view applying filters and streaming CSV data from files to 
+   * download
+   *
+   * This is still duplicated because of dependency injection
+   * TODO: improve
+   */
+  def chunkedFromSource() = Action {
+    implicit request: Request[AnyContent] =>
+    val filename = filenameFromRequest(request)
+    val source = csvSourceFactory(request)
+    Ok.chunked(source)
       .withHeaders(
-        CONTENT_DISPOSITION -> "attachment; filename=".concat(outputFilename))
+        CONTENT_DISPOSITION -> "attachment; filename=".concat(filename))
       .as("text/csv")
   }
+
 
 }

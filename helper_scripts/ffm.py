@@ -1,9 +1,12 @@
 """
 A script to serial the functional flow metrics to csv
 """
+# This is not particularly pretty
+# TODO: Improve if it will not be a one-off
 import os
 import re
 import shutil
+
 
 BASE_DIR = os.path.join(
     os.path.dirname(__file__), '..', '..', 'data')
