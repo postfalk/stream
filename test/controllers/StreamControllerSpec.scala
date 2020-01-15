@@ -120,19 +120,23 @@ class StreamControllerSpec extends PlaySpec
     }
   }
 
-  "StreamController monthsFilter" should {
+  /**
+   * Tests whether a generalized method is doing the job of deprecated 
+   * monthsFilter
+   */
+  "StreamController colFilter" should {
     "filter by months" in {
       val controller = new StreamController(stubControllerComponents())
       val exampleData = List("123", "max", "estimated", "1950", "3", "2.5")
         .map(ByteString(_))
       val exampleList = List("3").map(ByteString(_))
-      controller.monthsFilter(exampleData, exampleList) must be (true)
+      controller.colFilter(exampleData, exampleList, 4) must be (true)
       val anotherList = List("4").map(ByteString(_))
-      controller.monthsFilter(exampleData, anotherList) must be (false)
+      controller.colFilter(exampleData, anotherList, 4) must be (false)
       val multiList = List("3", "4").map(ByteString(_))
-      controller.monthsFilter(exampleData, multiList) must be (true)
+      controller.colFilter(exampleData, multiList, 4) must be (true)
       val fullList = (0 until 12).map(_.toString).toList.map(ByteString(_))
-      controller.monthsFilter(exampleData, fullList) must be (true)
+      controller.colFilter(exampleData, fullList, 4) must be (true)
     }
   }
 
@@ -176,19 +180,19 @@ class StreamControllerSpec extends PlaySpec
     "return a filename" in {
       val controller = new StreamController(stubControllerComponents())
       val query = Map[String, Seq[String]]()
-      controller.filenameFromQuery(query) must be ("flow.csv")
-      val longComidQuery = Map("comids" -> 
-        Seq("1042, 1688, 1002, 2003, 3002, 1222"))
-      controller.filenameFromQuery(longComidQuery)
+      controller.filenameFromRequest(
+        FakeRequest("GET", "/stream/")) must be ("flow.csv")
+      val longComidRequest = FakeRequest(
+        "GET", "/stream/?comids=1042,1688,1002,2003,3002,1222")
+      controller.filenameFromRequest(longComidRequest)
         .must(be(("flow_1042_1688_1002_2003_3002.csv")))
-      val shortComidQuery = Map("comids" -> Seq("1042, 1688"))
-      controller.filenameFromQuery(shortComidQuery)
+      val shortComidRequest = FakeRequest("GET", "/stream/?comids=1042,1688")
+      controller.filenameFromRequest(shortComidRequest)
         .must(be(("flow_1042_1688.csv")))
-      val complexQuery = Map("comids" -> Seq("1042"), 
-        "statistics" -> Seq("min,max"), "variables" -> Seq("estimated"),
-        "begin_year" -> Seq("1980,2000"), "end_year" -> Seq("1980"),
-        "months" -> Seq("1","2"))
-      controller.filenameFromQuery(complexQuery)
+      val complexRequest = FakeRequest(
+        "GET", "/stream/?comids=1042&statistics=min,max&variables=estimated" + 
+        "&begin_year=1980&end_year=1980&months=1,2")
+      controller.filenameFromRequest(complexRequest)
         .must(be(("flow_1042_min_max_estimated_1980_1980_1_2.csv")))
     }
   }

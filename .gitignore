@@ -1,11 +1,6 @@
 data
 logs
 
-pdump/*
-!pdump/10000042/
-!pdump/10000688/
-!pdump/10000692/
-
 target
 /.idea
 /.idea_modules

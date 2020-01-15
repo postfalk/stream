@@ -1,19 +1,15 @@
 package controllers
 
-import java.net.URLDecoder
 import javax.inject.Inject
 import java.nio.file.{Paths, NoSuchFileException}
-import play.api.libs.json.{Json, JsValue, JsNumber, JsString, JsArray, JsNull}
 import play.api.mvc.{
-  Request, AnyContent, AnyContentAsEmpty, AnyContentAsJson,
-  AbstractController, ControllerComponents}
-import play.core.parsers.FormUrlEncodedParser
+  Request, AnyContent, AbstractController, ControllerComponents}
 import akka.NotUsed
 import akka.stream.SourceShape
-import akka.stream.scaladsl.{
-  FileIO, Source, Sink, GraphDSL, Merge, Flow, Partition, Concat}
-import akka.util.ByteString
 import akka.stream.alpakka.csv.scaladsl.CsvParsing
+import akka.stream.scaladsl.{
+  FileIO, Source, GraphDSL, Merge, Flow, Partition}
+import akka.util.ByteString
 
 /**
  *  Stream CSV data according to requested stream segments (comids) and
@@ -35,15 +31,6 @@ class StreamController @Inject(
     Boolean = {
       val checkThisOne = in(3).utf8String
       begin <= checkThisOne && end >= checkThisOne
-    }
-
-  /**
-   *  Month filter is specific to StreamController albeit it might work
-   *  as special case of a more general filter class
-   */
-  def monthsFilter(in: List[ByteString], monthsList: List[ByteString]):
-    Boolean = {
-      monthsList.foldLeft(false) {_ || in(4) == _}
     }
 
   /**
@@ -71,31 +58,40 @@ class StreamController @Inject(
     partList.map(_.utf8String.trim()).mkString("_") ++ ".csv"
   }
 
+  /**
+   * Create a Source from query parameters
+   */
   def sourceFactory(query: Map[String, Seq[String]]): 
     Source[ByteString, NotUsed] = {
 
+    /**
+     * Statistics and variables are not filtered but are part of the pathname
+     * to access the data
+     */
     val statistics = getLimitedValues("statistics", query,
       List("max", "min", "mean", "median"))
-
     val variables = getLimitedValues("variables", query,
       List("estimated", "p10", "p90", "observed"))
 
+    /**
+     * Months and years are filtered within the data files and the stream
+     * needs to flow over the filterFlow
+     */
     val months = getLimitedValues("months", query,
       (1 until 13).map(_.toString).toList)
-
     val beginYear = getYearOrDefault("begin_year", query, "1950")
-
     val endYear = getYearOrDefault("end_year", query, "2015")
 
-    val filterSwitch = getSwitch(query,
-      List("begin_year", "end_year", "months"))
+    /**
+     * Decides whether the stream needs flow over filterFlow
+     */
+    val filterSwitch = getSwitch(
+      query, List("begin_year", "end_year", "months"))
 
     /**
-     * Convert comids in query params to list
+     * Get a source representing a list of Comids
      */
-    val comidList = getValues("comids", query)
-      .map(_.utf8String)
-      .toList
+    val source = getComidsSource(query)
 
     /**
      *  Flow generating a stream of rows from an incoming stream of comid's
@@ -130,42 +126,23 @@ class StreamController @Inject(
     val filterFlow = Flow[ByteString]
       .via(CsvParsing.lineScanner())
       .filter(yearsFilter(_, beginYear, endYear))
-      .filter(monthsFilter(_, months))
+      .filter(colFilter(_, months, 4))
       .map(formatCsvLine)
 
+    /**
+     * Return a source that can be materialized in the view
+     */
     Source.fromGraph(GraphDSL.create() {
       implicit builder =>
         import GraphDSL.Implicits._
 
-      /**
-       * Stream comids requested by query parameters
-       */
-      val source1 = Source(comidList)
-
-      /**
-       * Stream source from index.csv file, when no comids are provided
-       * Assume that this is faster than stat'ing a folder with ~130.000
-       * subfolders.
-       */
-      val source2 = FileIO
-        .fromPath(Paths.get("pdump/index.csv"))
-        .via(CsvParsing.lineScanner()).map(_(0).utf8String)
-
-      /** Not sure whether that is the most elegant way to switch between 
-       *  sources but works for now.
-       */
-      val source = if (comidsListFilter(query))
-        { source2 } else { source1 }
-
       val merge = builder.add(Merge[ByteString](2))
-
       /**
        * Use Partition to circumvent filter function if no filter values
        * provided
        */
       val partition = builder.add(Partition[ByteString]
         (2, in => if (filterSwitch) 0 else 1))
-
       /**
        * Assemble the flow
        */
@@ -177,10 +154,10 @@ class StreamController @Inject(
   }
 
   /**
-   * A play view applying filters and streaming CSV data from files to 
-   * download
+   * A view streaming CSV data from files to download
    *
-   * This is still duplicated because of dependency injection
+   * This is still duplicated because of dependency injection of required
+   * ControllerComponents
    * TODO: improve
    */
   def chunkedFromSource() = Action {
@@ -192,6 +169,5 @@ class StreamController @Inject(
         CONTENT_DISPOSITION -> "attachment; filename=".concat(filename))
       .as("text/csv")
   }
-
 
 }
