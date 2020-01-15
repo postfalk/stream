@@ -11,8 +11,8 @@ POST   /stream/                     controllers.StreamController.chunkedFromSour
 GET    /ffm/                        controllers.FunctionalController.chunkedFromSource
 POST   /ffm/                        controllers.FunctionalController.chunkedFromSource
 # Experimental user controller
-GET    /users/:id/                  controllers.UsersController.get(id:Integer)
+# GET    /users/:id/                  controllers.UsersController.get(id:Integer)
 # Database test
-GET    /databasetest/               controllers.DatabaseTestController.get
+# GET    /databasetest/               controllers.DatabaseTestController.get
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
