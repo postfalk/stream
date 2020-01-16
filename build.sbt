@@ -6,17 +6,18 @@ version := "0.5-SNAPSHOT"
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
-scalaVersion := "2.12.5"
+scalaVersion := "2.12.7"
 
 libraryDependencies ++= Seq(guice, jdbc, ws)
 //libraryDependencies += "com.h2database" % "h2" % "1.4.200"
 libraryDependencies += "org.scalatestplus.play" %% "scalatestplus-play" % "3.1.2" % Test
 libraryDependencies += "com.typesafe.play" %% "play-iteratees" % "2.6.1"
 libraryDependencies += "com.typesafe.play" %% "play-iteratees-reactive-streams" % "2.6.1"
-libraryDependencies += "com.typesafe.akka" %% "akka-stream" % "2.5.11"
-libraryDependencies += "com.lightbend.akka" %% "akka-stream-alpakka-csv" % "0.18"
-libraryDependencies += "com.lightbend.akka" %% "akka-stream-alpakka-s3" % "0.18"
-libraryDependencies += "com.typesafe.akka" %% "akka-testkit" % "2.5.11"
+libraryDependencies += "com.typesafe.akka" %% "akka-stream" % "2.6.1"
+libraryDependencies += "com.lightbend.akka" %% "akka-stream-alpakka-csv" % "1.1.2"
+// libraryDependencies += "com.lightbend.akka" %% "akka-stream-alpakka-s3" % "0.18"
+libraryDependencies += "com.typesafe.akka" %% "akka-testkit" % "2.6.1"
+libraryDependencies += "com.typesafe.akka" %% "akka-slf4j" % "2.6.1"
 //libraryDependencies += "com.typesafe.play" % "play-jdbc-evolutions_2.12" % "2.6.1"
 //libraryDependencies ++= Seq(
 //  "org.postgresql" % "postgresql" % "42.2.8",
