@@ -1,18 +1,12 @@
 """
-A script to serial the functional flow metrics to csv
+A script to re-serialize functional flow metrics files
 """
 # This is not particularly pretty
 # TODO: Improve if it will not be a one-off
 import os
 import re
 import shutil
-
-
-BASE_DIR = os.path.join(
-    os.path.dirname(__file__), '..', '..', 'data')
-ALL_YEAR_DIR = os.path.join(BASE_DIR, 'nhd_ffm_predictions')
-WYT_DIR = os.path.join(BASE_DIR, 'nhd_ffm_predictions_wyt')
-OUTPUT_DIRECTORY = os.path.join(BASE_DIR, 'ffm')
+import config
 
 
 def check_wyt(first_line):
@@ -25,10 +19,14 @@ def format_digits(text_field):
     return res.group(0)
 
 
-def process(filename):
-    print('processing', filename)
+def process(pathname):
+    print('processing', pathname)
     first_line = True
-    with open(filename) as fil:
+    # we need this for ffm name override from filename
+    filename = os.path.split(pathname)[1]
+    print(filename)
+    with open(pathname) as fil:
+
         for line in fil:
             if first_line:
                 wyt_present = check_wyt(line)
@@ -53,19 +51,27 @@ def process(filename):
                 # lower case text fields
                 for idx in [1, 2, 8]:
                     parts[idx] = parts[idx].lower()
+                # remap variable names
+                parts[1] = config.FFM_MAPPINGS.get(parts[1], parts[1])
+                # override ffm by filename
+                parts[1] = config.FFM_OVERWRITE_BY_FILENAME.get(
+                    filename, parts[1])
                 # change "obs" to "observed"
-                if parts[8] == 'obs\n':
-                    parts[8] = 'observed\n'
+                parts[8] = config.SOURCE_MAPPINGS.get(parts[8], parts[8])
+                parts = parts[0:8] + [
+                    config.UNIT_DIC.get(parts[1], '')] + [parts[8]]
                 out_line = ','.join(parts)
-                out_file_name = os.path.join(OUTPUT_DIRECTORY, comid + '.csv')
+                out_file_name = os.path.join(
+                    config.OUTPUT_DIRECTORY, comid + '.csv')
                 with open(out_file_name, 'a') as out:
                     out.write(out_line)
 
+
 def main():
-    shutil.rmtree(OUTPUT_DIRECTORY)
-    os.makedirs(OUTPUT_DIRECTORY, exist_ok=True)
+    shutil.rmtree(config.OUTPUT_DIRECTORY, ignore_errors=True)
+    os.makedirs(config.OUTPUT_DIRECTORY, exist_ok=True)
     file_list = []
-    for item in [ALL_YEAR_DIR, WYT_DIR]:
+    for item in [config.ALL_YEAR_DIR, config.WYT_DIR]:
         file_list += [
             os.path.abspath(os.path.join(item, entry))
             for entry in os.listdir(item)]
