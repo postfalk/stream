@@ -106,7 +106,10 @@ trait APIController {
     if (comidsListFilter(query))
       FileIO
         .fromPath(Paths.get("pdump/index.csv"))
-        .via(CsvParsing.lineScanner()).map(_(0).utf8String)
+        .recover({ case _: NoSuchFileException => ByteString() } )
+        .filterNot({_ == ByteString()})
+        .via(CsvParsing.lineScanner())        
+        .map(_(0).utf8String)
     else
       Source(comidList)
   }
