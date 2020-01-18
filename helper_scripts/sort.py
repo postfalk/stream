@@ -14,7 +14,8 @@ def sort_file(filename):
             if first_line:
                 header_line = line
                 first_line = False
-            lines.append(line)
+            else:
+                lines.append(line)
     lines.sort()
     with open(filename, 'w') as fil:
         fil.write(header_line)

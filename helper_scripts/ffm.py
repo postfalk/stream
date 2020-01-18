@@ -24,10 +24,12 @@ def process(pathname):
     first_line = True
     # we need this for ffm name override from filename
     filename = os.path.split(pathname)[1]
-    print(filename)
+    ct = 0
     with open(pathname) as fil:
-
         for line in fil:
+            ct += 1
+            # if ct > 2:
+            #    break
             if first_line:
                 wyt_present = check_wyt(line)
                 first_line = False
@@ -63,6 +65,7 @@ def process(pathname):
                 out_line = ','.join(parts)
                 out_file_name = os.path.join(
                     config.OUTPUT_DIRECTORY, comid + '.csv')
+                # print(out_line, end='')
                 with open(out_file_name, 'a') as out:
                     out.write(out_line)
 

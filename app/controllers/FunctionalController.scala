@@ -23,13 +23,15 @@ class FunctionalController @Inject() (
   cc: ControllerComponents) extends AbstractController(cc) with APIController {
 
   val allowedParams = List("comids", "ffms", "wyts", "sources")
-  val csvHeaderLine = "comid,ffm,wyt,p10,p25,p50,p75,p90,source\n"
+  val csvHeaderLine = "comid,ffm,wyt,p10,p25,p50,p75,p90,unit,source\n"
   val dataDirectory = "pdump/ffm/"
   val registeredFfms = List("ds_dur_ws", "ds_mag_50", "ds_mag_90", "ds_tim",
-    "fa_mag", "fa_tim", "peak_10", "peak_20", "peak_50", "sp_dur", "sp_mag",
-    "sp_tim", "wet_bfl_dur", "wet_bfl_mag_10", "wet_bfl_mag_50", "wet_tim")
+    "fa_mag", "fa_tim", "peak_10", "peak_2", "peak_5", "peak_dur_10", 
+    "peak_dur_2", "peak_dur_5", "peak_fre_10", "peak_fre_2", "peak_fre_5",
+    "sp_dur", "sp_mag", "sp_tim", "wet_bfl_dur", "wet_bfl_mag_10",
+    "wet_bfl_mag_50", "wet_tim")
   val registeredWyts = List("all", "wet", "dry", "moderate")
-  val registeredSources = List("model", "obs")
+  val registeredSources = List("model", "inferred")
 
   def filenameFromRequest(request: Request[AnyContent]): String = {
     val query = getQuery(request)
@@ -72,7 +74,7 @@ class FunctionalController @Inject() (
           .via(CsvParsing.lineScanner())
           .filter(colFilter(_, ffms, 1))
           .filter(colFilter(_, wyts, 2))
-          .filter(colFilter(_, sources, 8))
+          .filter(colFilter(_, sources, 9))
           .map(formatCsvLine)
 
         val partition = builder.add(

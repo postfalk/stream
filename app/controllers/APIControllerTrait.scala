@@ -74,7 +74,9 @@ trait APIController {
    * Filter CSV stream by column number
    */
   def colFilter(in: List[ByteString], valueList: List[ByteString], col:Int):
-    Boolean = valueList.foldLeft(false) {_ || in(col) == _ }
+    Boolean = {
+      valueList.foldLeft(false) {_ || in(col) == _}
+    }
 
   /**
    * Decide whether there is a valid comid list or whether no limiting list
