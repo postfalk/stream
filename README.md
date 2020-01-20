@@ -248,3 +248,4 @@ https://flow-api.codefornature.org/api/v2/ffm/?comids=0&ffms=ds_dur_ws&wyts=dry
 
 To get the dry season duration values for dry water years for all stream segments.
 
+Be aware of the fact that not all comids have the full set of variables. I guess the best strategy would be a connector function that fills in missing values. 
