@@ -37,7 +37,7 @@ by comid and including all variables) will take about an hour and yields
 ~ 1 billion records and 47 Gbyte of data.
 
 The endpoint for the API v2 is
-https://flow-api.codefornature.org/api/v2/stream/.
+https://flow-api.codefornature.org/v2/stream/.
 
 Currently, the only available response Content-type is ```text/csv```.
 Transfer-encoding is ```chunked```. Additional Content-types could be added
