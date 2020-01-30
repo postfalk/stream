@@ -110,7 +110,7 @@ Allowed values for ```months``` are 1 .. 12
 
 Examples:
 
-https://flow-api.codefornature.org/api/v2/stream/?statistics=max,min&variables=estimated&months=5,6,9&begin_year=1980&end_year=1981
+https://flow-api.codefornature.org/v2/stream/?statistics=max,min&variables=estimated&months=5,6,9&begin_year=1980&end_year=1981
 
 This will return estimated maximal and minimal values for 1980 and 1981 for
 the months of May, June, and September for all ~ 130,000 stream segments
@@ -119,7 +119,7 @@ should take about 8 to 10 minutes on a reasonably fast Internet connection.
 
 For a single stream segment:
 
-https://flow-api.codefornature.org/api/v2/stream/?comids=10000042&variables=estimated
+https://flow-api.codefornature.org/v2/stream/?comids=10000042&variables=estimated
 
 ## POST requests
 
@@ -141,7 +141,7 @@ An example download form could look like this:
 
 ```html
 
-<form action="https://flow-api.codefornature.org/api/v2/stream/" method="post">
+<form action="https://flow-api.codefornature.org/v2/stream/" method="post">
 
   <!-- Use type=hidden for values preselected by app interactions -->
   <input type="hidden" name="comids" value="10000042,10000688">
@@ -224,7 +224,7 @@ and faster data storage.
 
 I implemented a first version of the functional flow endpoint where the query schema is very similar and it supports either GET or POST with a json body (see above for details). The endpoint is
 
-https://flow-api.codefornature.org/api/v2/ffm/
+https://flow-api.codefornature.org/v2/ffm/
 
 While querying without parameters it will return the empty csv schema:
 
@@ -234,7 +234,7 @@ comid,ffm,wyt,p10,p25,p50,p75,p90,unit,source
 
 Provide a list of comids to get data:
 
-https://flow-api.codefornature.org/api/v2/ffm/?comids=10000042,10000688
+https://flow-api.codefornature.org/v2/ffm/?comids=10000042,10000688
 
 The supported query fields are:
 
@@ -244,7 +244,7 @@ The supported query fields are:
 
 e.g.
 
-https://flow-api.codefornature.org/api/v2/ffm/?comids=0&ffms=ds_dur_ws&wyts=dry
+https://flow-api.codefornature.org/v2/ffm/?comids=0&ffms=ds_dur_ws&wyts=dry
 
 To get the dry season duration values for dry water years for all stream segments.
 
