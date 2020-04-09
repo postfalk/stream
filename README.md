@@ -238,7 +238,7 @@ https://flow-api.codefornature.org/v2/ffm/?comids=10000042,10000688
 
 The supported query fields are:
 
-- ```ffms``` ... list of functional flow metrics to return with the value ds_dur_ws, ds_mag_50, ds_mag_90, ds_tim, fa_mag, fa_tim, peak_10, peak_2, peak_5, peak_dur_10, peak_dur_2, peak_dur_5, peak_fre_10, peak_fre_2, peak_fre_5, sp_dur, sp_mag, sp_tim, wet_bfl_dur, wet_bfl_mag_10, wet_bfl_mag_50, wet_tim" (not all values are available for every stream segment)
+- ```ffms``` ... list of functional flow metrics to return with the value ds_dur_ws, ds_mag_50, ds_mag_90, ds_tim, fa_dur, fa_mag, fa_tim, peak_10, peak_2, peak_5, peak_dur_10, peak_dur_2, peak_dur_5, peak_fre_10, peak_fre_2, peak_fre_5, sp_dur, sp_mag, sp_roc, sp_tim, wet_bfl_dur, wet_bfl_mag_10, wet_bfl_mag_50, wet_tim" (not all values are available for every stream segment)
 - ```wyts``` ... water year types: all, dry, moderate, and wet (where all means the average of all year types and NOT all water year types
 - ```sources``` ... with the values model or inferred (I guess not very useful)
 
