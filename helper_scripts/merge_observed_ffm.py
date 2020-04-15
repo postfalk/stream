@@ -69,7 +69,7 @@ def add_observed():
             parts = line.split(',')
             if old != parts[0]:
                 if not first_record:
-                    save_file(parts[0], lines)
+                    save_file(old, lines)
                 first_record = False
                 old = parts[0]
                 lines = []

@@ -23,8 +23,8 @@ class FunctionalController @Inject() (
   cc: ControllerComponents) extends AbstractController(cc) with APIController {
 
   val allowedParams = List("comids", "ffms", "wyts", "sources")
-  val csvHeaderLine = "comid,ffm,wyt,p10,p25,p50,p75,p90,unit,source\n"
-  val dataDirectory = "pdump/ffm/"
+  val csvHeaderLine = "comid,ffm,wyt,p10,p25,p50,p75,p90,unit,source,gage_id,observed_years,alteration\n"
+  val dataDirectory = "pdump/ffm_observed/"
   val registeredFfms = List("ds_dur_ws", "ds_mag_50", "ds_mag_90", "ds_tim",
     "fa_mag", "fa_tim", "peak_10", "peak_2", "peak_5", "peak_dur_10", 
     "peak_dur_2", "peak_dur_5", "peak_fre_10", "peak_fre_2", "peak_fre_5",
@@ -39,7 +39,7 @@ class FunctionalController @Inject() (
     val ffms = getValues("ffms", query)
     val wyts = getValues("wyts", query)
     val sources = getValues("sources", query)
-    val partList = List(ByteString("ffm")) ++ comids ++ ffms ++ wyts ++ 
+    val partList = List(ByteString("ffm")) ++ comids ++ ffms ++ wyts ++
       sources
     partList.map(_.utf8String.trim()).mkString("_") ++ ".csv"
   }
