@@ -66,11 +66,17 @@ def process(pathname):
                 out_file_name = os.path.join(
                     config.OUTPUT_DIRECTORY, comid + '.csv')
                 # print(out_line, end='')
-                with open(out_file_name, 'a') as out:
-                    out.write(out_line)
+                # print(parts[1], parts[2])
+                if not (parts[1], parts[2]) in config.BLACK_LIST:
+                    with open(out_file_name, 'a') as out:
+                        out.write(out_line)
+                else:
+                    print('SKIP', (parts[1], parts[2]))
 
 
 def main():
+    print('Input directory', config.WYT_DIR)
+    print('Output directory', config.OUTPUT_DIRECTORY)
     shutil.rmtree(config.OUTPUT_DIRECTORY, ignore_errors=True)
     os.makedirs(config.OUTPUT_DIRECTORY, exist_ok=True)
     file_list = []

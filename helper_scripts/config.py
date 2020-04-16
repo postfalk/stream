@@ -8,8 +8,23 @@ ALL_YEAR_DIR = os.path.join(BASE_DIR, 'nhd_ffm_predictions')
 ADDITIONAL_DATA_FILE = os.path.join(
     BASE_DIR, 'usgs_altered_ffc_percentiles_Updated_Schema_20200410.csv')
 WYT_DIR = os.path.join(BASE_DIR, 'nhd_ffm_predictions_wyt')
-OUTPUT_DIRECTORY = os.path.join(BASE_DIR, 'ffm')
+OUTPUT_DIRECTORY = os.environ.get(
+    'OUTPUT_DIRECTORY') or os.path.join(BASE_DIR, 'ffm')
 OBSERVED_DIRECTORY = os.path.join(BASE_DIR, 'ffm_observed')
+
+
+# Don't transfer these ffms, wyt combinations to the
+# final output
+BLACK_LIST = [
+    ('peak_2', 'dry'),
+    ('peak_2', 'moderate'),
+    ('peak_2', 'wet'),
+    ('peak_5', 'dry'),
+    ('peak_5', 'moderate'),
+    ('peak_5', 'wet'),
+    ('peak_10', 'dry'),
+    ('peak_10', 'moderate'),
+    ('peak_10', 'wet'),]
 
 
 UNIT_DIC = {
