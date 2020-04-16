@@ -31,7 +31,7 @@ class FunctionalController @Inject() (
     "sp_dur", "sp_mag", "sp_tim", "wet_bfl_dur", "wet_bfl_mag_10",
     "wet_bfl_mag_50", "wet_tim")
   val registeredWyts = List("all", "wet", "dry", "moderate")
-  val registeredSources = List("model", "inferred")
+  val registeredSources = List("model", "inferred", "observed")
 
   def filenameFromRequest(request: Request[AnyContent]): String = {
     val query = getQuery(request)
