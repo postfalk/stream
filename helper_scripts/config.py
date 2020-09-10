@@ -1,16 +1,21 @@
 import os
 
 
-BASE_DIR = os.path.abspath(os.path.join(
-    os.path.dirname(__file__), '..', '..', 'data'))
+# BASE_DIR = os.path.abspath(os.path.join(
+#    os.path.dirname(__file__), '..', '..', 'data'))
+BASE_DIR = '/Volumes/flow_data/rivers_stream'
 ALL_YEAR_DIR = os.path.join(BASE_DIR, 'nhd_ffm_predictions')
 # see issue #48
-ADDITIONAL_DATA_FILE = os.path.join(
-    BASE_DIR, 'usgs_altered_ffc_percentiles_Updated_Schema_20200410.csv')
+ADDITIONAL_DATA_FILES = [
+    os.path.join(
+    BASE_DIR, 'usgs_altered_ffc_percentiles_Updated_Schema_20200410.csv'),
+    os.path.join(
+    BASE_DIR, 'usgs_ref_ffc_percentiles_Updated_Schema.csv')]
 WYT_DIR = os.path.join(BASE_DIR, 'nhd_ffm_predictions_wyt')
 OUTPUT_DIRECTORY = os.environ.get(
     'OUTPUT_DIRECTORY') or os.path.join(BASE_DIR, 'ffm')
-OBSERVED_DIRECTORY = os.path.join(BASE_DIR, 'ffm_observed')
+OBSERVED_DIRECTORY = os.environ.get(
+    'OBSERVED_DIRECTORY') or os.path.join(BASE_DIR, 'ffm_observed')
 
 
 # Don't transfer these ffms, wyt combinations to the

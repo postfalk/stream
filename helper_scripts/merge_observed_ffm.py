@@ -55,30 +55,31 @@ def save_file(comid, lines, overwrite=True):
 
 
 def add_observed():
-    with open(config.ADDITIONAL_DATA_FILE) as observed_file:
-        old = ''
-        first_line = True
-        first_record = True
-        lines = []
-        for line in observed_file:
-            # skip the first header line
-            if first_line:
-                first_line = False
-                continue
-            # start over when the comid changes
-            parts = line.split(',')
-            if old != parts[0]:
-                if not first_record:
-                    save_file(old, lines)
-                first_record = False
-                old = parts[0]
-                lines = []
-                modelled_filename = os.path.join(
-                    config.OUTPUT_DIRECTORY, parts[0] + '.csv')
-                with open(modelled_filename) as modelled_file:
-                    lines = [lin for lin in modelled_file]
-            lines.append(line)
-        save_file(parts[0], lines)
+    for item in config.ADDITIONAL_DATA_FILES:
+        with open(item) as observed_file:
+            old = ''
+            first_line = True
+            first_record = True
+            lines = []
+            for line in observed_file:
+                # skip the first header line
+                if first_line:
+                    first_line = False
+                    continue
+                # start over when the comid changes
+                parts = line.split(',')
+                if old != parts[0]:
+                    if not first_record:
+                        save_file(old, lines)
+                    first_record = False
+                    old = parts[0]
+                    lines = []
+                    modelled_filename = os.path.join(
+                        config.OUTPUT_DIRECTORY, parts[0] + '.csv')
+                    with open(modelled_filename) as modelled_file:
+                        lines = [lin for lin in modelled_file]
+                lines.append(line)
+            save_file(parts[0], lines)
 
 
 def add_all_others():
