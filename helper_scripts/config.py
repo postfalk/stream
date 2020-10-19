@@ -16,6 +16,14 @@ OUTPUT_DIRECTORY = os.environ.get(
     'OUTPUT_DIRECTORY') or os.path.join(BASE_DIR, 'ffm')
 OBSERVED_DIRECTORY = os.environ.get(
     'OBSERVED_DIRECTORY') or os.path.join(BASE_DIR, 'ffm_observed')
+OBSERVED_FILTERED = os.environ.get(
+    'OBSERVED_FILTERED') or os.path.join(BASE_DIR, 'ffm_observed_filtered')
+OBSERVED_NEW_PEAK = os.environ.get(
+    'OBSERVED_NEW_PEAK') or os.path.join(BASE_DIR, 'ffm_observed_peak')
+FFM_REFERENCE = os.path.join(
+    BASE_DIR, 'COMID_with_observed_functional_flow_data.csv')
+NEW_PEAK_FLOW_SOURCE = os.path.join(
+    BASE_DIR, 'updates_for_V1_1_0.csv')
 
 
 # Don't transfer these ffms, wyt combinations to the

@@ -46,7 +46,13 @@ def process(pathname):
                     parts = parts[0:2] + ['All'] + parts[2:]
                 # use only two digits after the decimal point
                 for idx in range(3, 8):
-                    parts[idx] = format_digits(parts[idx])
+                    try:
+                        # round negative values close to zero
+                        if parts[idx][0] == '-':
+                            parts[idx] = str(round(float(parts[idx])))
+                    except IndexError:
+                        pass
+                parts[idx] = format_digits(parts[idx])
                 # put the comid first
                 parts[1] = parts[0]
                 parts[0] = comid
