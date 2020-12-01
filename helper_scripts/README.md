@@ -8,4 +8,4 @@ Processing order:
 2. merge_observed_ffm.py: merge observed data
 3. remove_inferred.py: remove data according issue #59
 4. peak_flow.py: add new peak flow
-5. remove_comids.py: remove comids we don't want to display because of questionable data
+5. remove_delta_colorado.py: remove comids we don't want to display because of questionable data
