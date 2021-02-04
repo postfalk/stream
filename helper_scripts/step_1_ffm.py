@@ -2,11 +2,14 @@
 A script to re-serialize functional flow metrics files
 """
 # This is not particularly pretty
-# TODO: Improve if it will not be a one-off
+# TODO: Improve if not a one-off
 import os
 import re
 import shutil
 import config
+
+
+BREAK_AFTER = -1
 
 
 def check_wyt(first_line):
@@ -15,8 +18,22 @@ def check_wyt(first_line):
 
 
 def format_digits(text_field):
-    res = re.search('^\d*([.]\d{0,2})?', text_field)
-    return res.group(0)
+    """
+    Formatting numbers to three valid digits (including trailing
+    zeros). This seems to be terrible and slow. Improve
+    """
+    ret = '{}'.format(float('%.3g' % float(text_field)))
+    length = 5 if ret[0] == '-' else 4
+    while len(ret) < length:
+        if not '.' in ret:
+            ret += '.'
+        else:
+            ret += '0'
+    while len(ret) > length and '.' in ret and ret[-1] == '0':
+        ret = ret[:-1]
+    if ret[-1] == '.':
+        ret = ret[:-1]
+    return ret
 
 
 def process(pathname):
@@ -24,12 +41,12 @@ def process(pathname):
     first_line = True
     # we need this for ffm name override from filename
     filename = os.path.split(pathname)[1]
-    ct = 0
+    ct = BREAK_AFTER
     with open(pathname) as fil:
         for line in fil:
-            ct += 1
-            # if ct > 2:
-            #    break
+            ct -= 1
+            if ct == 0:
+                break
             if first_line:
                 wyt_present = check_wyt(line)
                 first_line = False
@@ -46,13 +63,9 @@ def process(pathname):
                     parts = parts[0:2] + ['All'] + parts[2:]
                 # use only two digits after the decimal point
                 for idx in range(3, 8):
-                    try:
-                        # round negative values close to zero
-                        if parts[idx][0] == '-':
-                            parts[idx] = str(round(float(parts[idx])))
-                    except IndexError:
-                        pass
-                parts[idx] = format_digits(parts[idx])
+                    if float(parts[idx]) < 0:
+                        parts[idx] = '0'
+                    parts[idx] = format_digits(parts[idx])
                 # put the comid first
                 parts[1] = parts[0]
                 parts[0] = comid
@@ -69,6 +82,8 @@ def process(pathname):
                 parts = parts[0:8] + [
                     config.UNIT_DIC.get(parts[1], '')] + [parts[8]]
                 out_line = ','.join(parts)
+                # add additional fields not used by modelled values
+                out_line = out_line.replace('\n', ',,,,,\n')
                 out_file_name = os.path.join(
                     config.OUTPUT_DIRECTORY, comid + '.csv')
                 # print(out_line, end='')

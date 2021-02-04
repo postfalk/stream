@@ -1,13 +1,13 @@
 """
-Merges new observed data. This is for sure a little bit messy because of
-Corona Virus crises but for now the quickest way to get the data in.
-
-Run this script after ffm.py
+Merges new observed data.
+Run this script after step_1_ffm.py
 """
 # standard library
 import os
+import shutil
 # project
 import config
+from step_1_ffm import format_digits
 
 
 def find_duplicates(first, second):
@@ -54,8 +54,9 @@ def save_file(comid, lines, overwrite=True):
         print('Skip', path)
 
 
-def add_observed():
-    for item in config.ADDITIONAL_DATA_FILES:
+def add_observed(observed_data=[]):
+    for item in observed_data:
+        print('Process', item)
         with open(item) as observed_file:
             old = ''
             first_line = True
@@ -71,6 +72,7 @@ def add_observed():
                 if old != parts[0]:
                     if not first_record:
                         save_file(old, lines)
+                        pass
                     first_record = False
                     old = parts[0]
                     lines = []
@@ -78,26 +80,22 @@ def add_observed():
                         config.OUTPUT_DIRECTORY, parts[0] + '.csv')
                     with open(modelled_filename) as modelled_file:
                         lines = [lin for lin in modelled_file]
-                lines.append(line)
+                for idx, part in enumerate(parts[3:8]):
+                    parts[idx+3] = format_digits(part)
+                new_line = ','.join(parts)
+                lines.append(new_line)
             save_file(parts[0], lines)
 
 
-def add_all_others():
-    """
-    Add and reformat all other files
-    """
-    files = os.listdir(config.OUTPUT_DIRECTORY)
-    for filename in files:
-        in_path = os.path.join(config.OUTPUT_DIRECTORY, filename)
-        comid = filename.replace('.csv', '')
-        with open(in_path) as fil:
-            lines = [line for line in fil]
-        save_file(comid, lines, overwrite=False)
-
-
 def main():
-    add_observed()
-    add_all_others()
+    print('Making a copy of the data from prior step')
+    #shutil.copytree(
+    #    config.OUTPUT_DIRECTORY, config.OBSERVED_DIRECTORY,
+    #    dirs_exist_ok=True)
+    print('Applying following files')
+    print(config.ADDITIONAL_DATA_FILES)
+    print('Add observed data')
+    add_observed(observed_data=config.ADDITIONAL_DATA_FILES)
 
 
 if __name__ == '__main__':

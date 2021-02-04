@@ -33,7 +33,6 @@ def process(line):
 
 
 def main():
-    # os.makedirs(config.OBSERVED_NEW_PEAK, exist_ok=True)
     for line in line_generator():
         process(line)
 
