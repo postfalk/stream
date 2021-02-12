@@ -3,7 +3,8 @@ import os
 
 # BASE_DIR = os.path.abspath(os.path.join(
 #    os.path.dirname(__file__), '..', '..', 'data'))
-BASE_DIR = '/Volumes/flow_data/rivers_stream'
+BASE_DIR = os.environ.get(
+    'BASE_DIR') or '/Volumes/flow_data/rivers_stream'
 ALL_YEAR_DIR = os.path.join(BASE_DIR, 'nhd_ffm_predictions')
 ADDITIONAL_DATA_FILES = [
     os.path.join(BASE_DIR, 'ffm_observed_20201208.csv')]

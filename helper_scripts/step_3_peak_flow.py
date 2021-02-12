@@ -2,6 +2,7 @@
 import os
 # project
 import config
+from step_1_ffm import format_digits
 
 
 def line_generator():
@@ -11,11 +12,16 @@ def line_generator():
             if first_line:
                 first_line = False
                 continue
-            yield(line)
+            parts = line.replace('\n', '').split(',')
+            for idx, item in enumerate(parts[3:8]):
+                parts[idx+3] = format_digits(item)
+            while len(parts) < 15:
+                parts += ['']
+            yield(','.join(parts) + '\n')
 
 
 def get_comid(line):
-    return line.split(',')[0]
+    return line.split(',')[0]z
 
 
 def process(line):
@@ -34,6 +40,7 @@ def process(line):
 
 def main():
     for line in line_generator():
+        # print(line)
         process(line)
 
 
