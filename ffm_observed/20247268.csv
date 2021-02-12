@@ -1,96 +1,86 @@
-20216276,ds_dur_ws,all,56.18,97.4,155.01,219.45,277.23,days,model,,,
-20216276,ds_dur_ws,all,60.8,116,138,322,347.8,days,observed,10250800,5,not_enough_observed_data
-20216276,ds_dur_ws,dry,52.8,95.75,151.16,217.5,272.04,days,model,,,
-20216276,ds_dur_ws,moderate,55,95,152.55,219.28,277.6,days,model,,,
-20216276,ds_dur_ws,wet,64.81,101.3,161.27,219.66,278.59,days,model,,,
-20216276,ds_mag_50,all,0.164,0.2,0.3,0.3,0.3,cfs,observed,10250800,5,not_enough_observed_data
-20216276,ds_mag_50,all,0.17,3.65,7.78,14.46,26.22,cfs,model,,,
-20216276,ds_mag_50,dry,0.17,3.66,7.62,14.05,25.85,cfs,model,,,
-20216276,ds_mag_50,moderate,0.16,3.69,7.71,14.36,26.18,cfs,model,,,
-20216276,ds_mag_50,wet,0.19,3.57,8.02,15.68,27.33,cfs,model,,,
-20216276,ds_mag_90,all,0.258,0.3,0.3,0.4,0.4,cfs,observed,10250800,5,not_enough_observed_data
-20216276,ds_mag_90,all,1.25,4.48,11.79,20.87,35.35,cfs,model,,,
-20216276,ds_mag_90,dry,1.28,4.38,11.91,20.53,34.41,cfs,model,,,
-20216276,ds_mag_90,moderate,1.30,4.22,11.69,20.39,34.99,cfs,model,,,
-20216276,ds_mag_90,wet,1.16,4.66,11.51,21.75,36.75,cfs,model,,,
-20216276,ds_tim,all,211.78,263.25,292.37,323.68,348.82,water year day,model,,,
-20216276,ds_tim,all,287,301,317,335,344.2,water year day,observed,10250800,13,not_enough_observed_data
-20216276,ds_tim,dry,214,263.37,292.02,325,348.05,water year day,model,,,
-20216276,ds_tim,moderate,215.8,263.81,295,326.5,352.08,water year day,model,,,
-20216276,ds_tim,wet,206.13,261.25,294,322.3,346.19,water year day,model,,,
-20216276,fa_dur,all,2,2,2,2,2,days,observed,10250800,1,not_enough_observed_data
-20216276,fa_dur,all,2,3,5,7,13.4,days,inferred,,,
-20216276,fa_mag,all,30.8982353,30.8982353,30.8982353,30.8982353,30.8982353,cfs,observed,10250800,1,not_enough_observed_data
-20216276,fa_mag,all,5.07,17.58,42.90,112.42,252.88,cfs,model,,,
-20216276,fa_mag,dry,4.72,19.78,56.08,230.14,276.32,cfs,model,,,
-20216276,fa_mag,moderate,5.76,21.18,53.81,174.61,276.32,cfs,model,,,
-20216276,fa_mag,wet,4.01,13.53,34.94,89.91,163.57,cfs,model,,,
-20216276,fa_tim,all,4.97,11.87,35.47,51.55,62,water year day,model,,,
-20216276,fa_tim,all,66,66,66,66,66,water year day,observed,10250800,1,not_enough_observed_data
-20216276,fa_tim,dry,4,11.4,33.4,50.5,61.05,water year day,model,,,
-20216276,fa_tim,moderate,5,12.15,35.87,50.8,61.5,water year day,model,,,
-20216276,fa_tim,wet,5,12.89,37.79,56.13,63.01,water year day,model,,,
-20216276,peak_10,all,235.46,321.59,1085.16,2263.26,6598.59,cfs,model,,,
-20216276,peak_10,all,99,99,99,99,99,cfs,observed,10250800,27,likely_altered_low
-20216276,peak_10,dry,235.46,321.59,1085.16,2288.35,6624.24,cfs,model,,,
-20216276,peak_10,moderate,235.46,321.59,1085.16,2263.26,6598.59,cfs,model,,,
-20216276,peak_10,wet,235.46,321.59,1085.16,2263.26,6492.63,cfs,model,,,
-20216276,peak_2,all,2.2,2.2,2.2,2.2,2.2,cfs,observed,10250800,27,likely_altered_low
-20216276,peak_2,all,46.61,80.49,268.92,537.79,906.77,cfs,model,,,
-20216276,peak_2,dry,46.61,80.49,307.74,537.79,906.77,cfs,model,,,
-20216276,peak_2,moderate,46.61,80.49,268.92,537.79,906.77,cfs,model,,,
-20216276,peak_2,wet,46.61,80.49,268.92,537.79,861.36,cfs,model,,,
-20216276,peak_5,all,131.58,448.27,949.91,1663.18,4260.88,cfs,model,,,
-20216276,peak_5,all,31.4,31.4,31.4,31.4,31.4,cfs,observed,10250800,27,likely_altered_low
-20216276,peak_5,dry,131.58,448.27,949.91,1663.18,4260.88,cfs,model,,,
-20216276,peak_5,moderate,131.58,448.27,949.91,1663.18,4260.88,cfs,model,,,
-20216276,peak_5,wet,131.58,448.27,949.91,1663.18,4260.88,cfs,model,,,
-20216276,peak_dur_10,all,1,1,1,1,1,days,observed,10250800,3,not_enough_observed_data
-20216276,peak_dur_10,all,1,1,1,2,3.4,days,inferred,,,
-20216276,peak_dur_2,all,1,1,2,3.5,4.7,days,observed,10250800,14,not_enough_observed_data
-20216276,peak_dur_2,all,1,1,3,7,14,days,inferred,,,
-20216276,peak_dur_5,all,1,1,1,1,1.5,days,observed,10250800,6,not_enough_observed_data
-20216276,peak_dur_5,all,1,1,2,3,5,days,inferred,,,
-20216276,peak_fre_10,all,1,1,1,1,1,occurrences,observed,10250800,3,not_enough_observed_data
-20216276,peak_fre_10,all,1,1,1,2,2,occurrences,inferred,,,
-20216276,peak_fre_2,all,1,1,1.5,2,3,occurrences,observed,10250800,14,not_enough_observed_data
-20216276,peak_fre_2,all,1,1,2,3,5,occurrences,inferred,,,
-20216276,peak_fre_5,all,1,1,1,1,1.5,occurrences,observed,10250800,6,not_enough_observed_data
-20216276,peak_fre_5,all,1,1,1,2,3,occurrences,inferred,,,
-20216276,sp_dur,all,15.1,21.25,58,166.25,224.6,days,observed,10250800,12,not_enough_observed_data
-20216276,sp_dur,all,36.21,80.68,136.48,189.24,254.82,days,model,,,
-20216276,sp_dur,dry,33.45,79.32,142.1,195.12,261,days,model,,,
-20216276,sp_dur,moderate,37.95,82.75,137.1,189.81,254.36,days,model,,,
-20216276,sp_dur,wet,38,77.5,125.66,175.2,217.82,days,model,,,
-20216276,sp_mag,all,0.244,0.365,0.48,15.3,40,cfs,observed,10250800,15,likely_altered_low
-20216276,sp_mag,all,5.52,27.07,73.35,274.24,557.37,cfs,model,,,
-20216276,sp_mag,dry,4.81,27.41,66.55,269.05,553.65,cfs,model,,,
-20216276,sp_mag,moderate,5.26,23.45,75.89,283.29,611.31,cfs,model,,,
-20216276,sp_mag,wet,7.90,29.58,74.79,260.84,534.32,cfs,model,,,
-20216276,sp_roc,all,0.04,0.05,0.07,0.10,0.17,percent,inferred,,,
-20216276,sp_roc,all,0.095238095,0.110246331,0.153846154,0.216666667,0.25,percent,observed,10250800,11,not_enough_observed_data
-20216276,sp_tim,all,71.48,128.34,167.05,233.61,297.26,water year day,model,,,
-20216276,sp_tim,all,94.6,180,245.5,275.5,294,water year day,observed,10250800,14,not_enough_observed_data
-20216276,sp_tim,dry,65.3,117.9,168.4,251,305,water year day,model,,,
-20216276,sp_tim,moderate,66.65,132.58,165.77,230.4,292.04,water year day,model,,,
-20216276,sp_tim,wet,116.65,147.97,165.87,219.73,276.9,water year day,model,,,
-20216276,wet_bfl_dur,all,32,63.78,126.33,189.42,251.88,days,model,,,
-20216276,wet_bfl_dur,all,53.5,73,134,171.75,219.5,days,observed,10250800,6,not_enough_observed_data
-20216276,wet_bfl_dur,dry,32.95,72.15,150.35,226.48,270.89,days,model,,,
-20216276,wet_bfl_dur,moderate,30.8,63.57,121.25,179.41,240.06,days,model,,,
-20216276,wet_bfl_dur,wet,32.09,56.65,100.11,158.84,210.91,days,model,,,
-20216276,wet_bfl_mag_10,all,0.109,0.1285,0.17,0.24,0.28,cfs,observed,10250800,6,not_enough_observed_data
-20216276,wet_bfl_mag_10,all,1.44,6.08,13.98,21.80,30.43,cfs,model,,,
-20216276,wet_bfl_mag_10,dry,1.43,6.00,13.76,21.81,30.45,cfs,model,,,
-20216276,wet_bfl_mag_10,moderate,1.49,5.98,13.90,21.83,30.41,cfs,model,,,
-20216276,wet_bfl_mag_10,wet,1.44,6.52,14.54,21.66,31.21,cfs,model,,,
-20216276,wet_bfl_mag_50,all,0.22,0.24,0.29,0.385,0.425,cfs,observed,10250800,6,not_enough_observed_data
-20216276,wet_bfl_mag_50,all,1.85,5.45,17.60,29.26,42.19,cfs,model,,,
-20216276,wet_bfl_mag_50,dry,1.84,5.15,17.29,28.36,43.36,cfs,model,,,
-20216276,wet_bfl_mag_50,moderate,1.84,5.25,17.26,28.84,41.65,cfs,model,,,
-20216276,wet_bfl_mag_50,wet,2.41,6.80,19.46,31.58,46.04,cfs,model,,,
-20216276,wet_tim,all,10.47,22.65,48.42,99.03,131.1,water year day,model,,,
-20216276,wet_tim,all,32,94,135,294,308,water year day,observed,10250800,9,not_enough_observed_data
-20216276,wet_tim,dry,9.49,19.65,38.9,84,128.02,water year day,model,,,
-20216276,wet_tim,moderate,10.18,22.5,49.1,107.65,144.5,water year day,model,,,
-20216276,wet_tim,wet,14.5,31.12,65.5,106.40,128.38,water year day,model,,,
+20247268,ds_dur_ws,all,54.2,94.0,163,197,224,days,observed,10251300,13,1980,2020,likely_unaltered
+20247268,ds_dur_ws,all,54.5,97.7,155,228,284,days,model,,,,,
+20247268,ds_dur_ws,dry,50.0,95.9,150,228,284,days,model,,,,,
+20247268,ds_dur_ws,moderate,51.3,95.4,151,228,282,days,model,,,,,
+20247268,ds_dur_ws,wet,62.7,102,160,232,284,days,model,,,,,
+20247268,ds_mag_50,all,0.03,0.04,0.06,0.07,0.112,cfs,observed,10251300,13,1980,2020,likely_altered_low
+20247268,ds_mag_50,all,9.62,90.7,178,348,558,cfs,model,,,,,
+20247268,ds_mag_50,dry,8.67,90.7,176,346,557,cfs,model,,,,,
+20247268,ds_mag_50,moderate,9.67,90.7,175,348,576,cfs,model,,,,,
+20247268,ds_mag_50,wet,9.65,90.7,182,349,550,cfs,model,,,,,
+20247268,ds_mag_90,all,0.062,0.07,0.12,0.42,0.733,cfs,observed,10251300,13,1980,2020,likely_altered_low
+20247268,ds_mag_90,all,23.5,104,266,451,756,cfs,model,,,,,
+20247268,ds_mag_90,dry,23.6,104,263,448,703,cfs,model,,,,,
+20247268,ds_mag_90,moderate,25.9,108,266,448,744,cfs,model,,,,,
+20247268,ds_mag_90,wet,21.2,104,277,464,806,cfs,model,,,,,
+20247268,ds_tim,all,200,237,281,313,335,water year day,model,,,,,
+20247268,ds_tim,all,214,235,288,336,345,water year day,observed,10251300,14,1980,2020,likely_unaltered
+20247268,ds_tim,dry,198,237,284,314,336,water year day,model,,,,,
+20247268,ds_tim,moderate,200,237,283,313,335,water year day,model,,,,,
+20247268,ds_tim,wet,203,235,280,311,332,water year day,model,,,,,
+20247268,fa_dur,all,1.80,3.00,6.00,7.00,10.6,days,observed,10251300,5,1981,2016,not_enough_observed_data
+20247268,fa_dur,all,2.00,3.00,5.00,7.00,13.4,days,inferred,,,,,
+20247268,fa_mag,all,1.33,1.66,6.71,15.9,47.4,cfs,observed,10251300,5,1981,2016,not_enough_observed_data
+20247268,fa_mag,all,232,594,1690,4050,5090,cfs,model,,,,,
+20247268,fa_mag,dry,261,601,1700,4130,5090,cfs,model,,,,,
+20247268,fa_mag,moderate,234,600,1690,4180,5090,cfs,model,,,,,
+20247268,fa_mag,wet,157,529,992,2750,5090,cfs,model,,,,,
+20247268,fa_tim,all,4.66,11.9,36.9,55.2,61.9,water year day,model,,,,,
+20247268,fa_tim,all,9.20,17.0,40.0,54.0,57.0,water year day,observed,10251300,5,1981,2016,not_enough_observed_data
+20247268,fa_tim,dry,4.50,11.8,37.5,55.8,61.8,water year day,model,,,,,
+20247268,fa_tim,moderate,4.66,11.5,35.0,54.0,61.5,water year day,model,,,,,
+20247268,fa_tim,wet,4.82,12.0,38.0,56.4,62.4,water year day,model,,,,,
+20247268,peak_10,all,4340,5930,20400,56500,128000,cfs,model,,,,,
+20247268,peak_10,all,5480,8440,20800,40300,55400,cfs,model,,,,,
+20247268,peak_10,all,757,757,757,757,757,cfs,observed,10251300,14,1980,2020,not_enough_observed_data
+20247268,peak_2,all,72.0,72.0,72.0,72.0,72.0,cfs,observed,10251300,14,1980,2020,not_enough_observed_data
+20247268,peak_2,all,859,1480,5980,9910,18700,cfs,model,,,,,
+20247268,peak_2,all,883,1480,3520,8720,17200,cfs,model,,,,,
+20247268,peak_5,all,2420,8260,18200,31400,75900,cfs,model,,,,,
+20247268,peak_5,all,2480,4970,13500,25100,34800,cfs,model,,,,,
+20247268,peak_5,all,562,562,562,562,562,cfs,observed,10251300,14,1980,2020,not_enough_observed_data
+20247268,peak_dur_10,all,1.00,1.00,1.00,2.00,3.40,days,inferred,,,,,
+20247268,peak_dur_2,all,1.00,1.00,3.00,7.00,14.0,days,inferred,,,,,
+20247268,peak_dur_2,all,1.00,1.00,5.00,7.00,7.60,days,observed,10251300,9,1980,2020,not_enough_observed_data
+20247268,peak_dur_5,all,1.00,1.00,2.00,3.00,5.00,days,inferred,,,,,
+20247268,peak_fre_10,all,1.00,1.00,1.00,2.00,2.00,occurrences,inferred,,,,,
+20247268,peak_fre_2,all,1.00,1.00,1.00,2.00,4.00,occurrences,observed,10251300,9,1980,2020,not_enough_observed_data
+20247268,peak_fre_2,all,1.00,1.00,2.00,3.00,5.00,occurrences,inferred,,,,,
+20247268,peak_fre_5,all,1.00,1.00,1.00,2.00,3.00,occurrences,inferred,,,,,
+20247268,sp_dur,all,16.1,63.8,115,179,184,days,observed,10251300,14,1980,2020,likely_unaltered
+20247268,sp_dur,all,32.0,72.8,131,185,241,days,model,,,,,
+20247268,sp_dur,dry,31.0,71.0,135,189,243,days,model,,,,,
+20247268,sp_dur,moderate,31.0,72.8,133,188,253,days,model,,,,,
+20247268,sp_dur,wet,33.7,74.0,127,175,215,days,model,,,,,
+20247268,sp_mag,all,0.916,3.23,24.1,38.2,375,cfs,observed,10251300,14,1980,2020,likely_altered_low
+20247268,sp_mag,all,317,951,2970,8030,11900,cfs,model,,,,,
+20247268,sp_mag,dry,308,924,2390,8030,11900,cfs,model,,,,,
+20247268,sp_mag,moderate,324,969,3120,7800,11400,cfs,model,,,,,
+20247268,sp_mag,wet,315,928,2970,7790,11700,cfs,model,,,,,
+20247268,sp_roc,all,0.0481,0.0596,0.0759,0.106,0.178,percent,inferred,,,,,
+20247268,sp_roc,all,0.112,0.128,0.182,0.20,0.294,percent,observed,10251300,13,1980,2020,likely_altered_high
+20247268,sp_tim,all,105,151,176,200,226,water year day,observed,10251300,14,1980,2020,likely_unaltered
+20247268,sp_tim,all,90.7,137,180,248,310,water year day,model,,,,,
+20247268,sp_tim,dry,89.0,133,186,251,310,water year day,model,,,,,
+20247268,sp_tim,moderate,89.0,130,180,248,310,water year day,model,,,,,
+20247268,sp_tim,wet,100,146,174,234,304,water year day,model,,,,,
+20247268,wet_bfl_dur,all,17.2,106,130,147,177,days,observed,10251300,13,1980,2020,likely_unaltered
+20247268,wet_bfl_dur,all,30.5,60.6,139,210,255,days,model,,,,,
+20247268,wet_bfl_dur,dry,31.0,65.0,147,218,261,days,model,,,,,
+20247268,wet_bfl_dur,moderate,30.7,62.0,142,211,261,days,model,,,,,
+20247268,wet_bfl_dur,wet,30.1,56.2,114,169,228,days,model,,,,,
+20247268,wet_bfl_mag_10,all,0.151,0.16,0.359,0.446,0.652,cfs,observed,10251300,13,1980,2020,likely_altered_low
+20247268,wet_bfl_mag_10,all,30.2,117,295,444,590,cfs,model,,,,,
+20247268,wet_bfl_mag_10,dry,30.8,114,298,449,590,cfs,model,,,,,
+20247268,wet_bfl_mag_10,moderate,30.2,115,298,443,604,cfs,model,,,,,
+20247268,wet_bfl_mag_10,wet,30.1,121,288,434,565,cfs,model,,,,,
+20247268,wet_bfl_mag_50,all,0.697,0.75,0.99,1.36,12.0,cfs,observed,10251300,13,1980,2020,likely_altered_low
+20247268,wet_bfl_mag_50,all,35.4,126,427,633,989,cfs,model,,,,,
+20247268,wet_bfl_mag_50,dry,34.5,118,429,620,999,cfs,model,,,,,
+20247268,wet_bfl_mag_50,moderate,35.7,135,424,633,976,cfs,model,,,,,
+20247268,wet_bfl_mag_50,wet,35.1,133,429,642,966,cfs,model,,,,,
+20247268,wet_tim,all,13.2,30.0,57.9,118,131,water year day,model,,,,,
+20247268,wet_tim,all,17.0,20.0,52.0,93.2,131,water year day,observed,10251300,14,1980,2020,likely_unaltered
+20247268,wet_tim,dry,13.0,28.5,53.0,118,131,water year day,model,,,,,
+20247268,wet_tim,moderate,13.3,30.0,57.1,118,131,water year day,model,,,,,
+20247268,wet_tim,wet,13.0,30.0,64.0,112,130,water year day,model,,,,,
