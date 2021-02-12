@@ -13,5 +13,7 @@ target
 .DS_Store
 
 # etc
+*.scala.swp
+*.scala.swo
 *.pyc
 __pycache__
