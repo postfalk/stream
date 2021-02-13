@@ -2,11 +2,11 @@ name := """stream"""
 
 organization := "org.tnc.casoftwaredev"
 
-version := "0.7-SNAPSHOT"
+version := "0.8-SNAPSHOT"
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
-scalaVersion := "2.12.7"
+scalaVersion := "2.12.8"
 
 libraryDependencies ++= Seq(guice, jdbc, ws)
 //libraryDependencies += "com.h2database" % "h2" % "1.4.200"
