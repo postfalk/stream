@@ -7,7 +7,7 @@ BASE_DIR = os.environ.get(
     'BASE_DIR') or '/Volumes/flow_data/rivers_stream'
 ALL_YEAR_DIR = os.path.join(BASE_DIR, 'nhd_ffm_predictions')
 ADDITIONAL_DATA_FILES = [
-    os.path.join(BASE_DIR, 'ffm_observed_20201208.csv')]
+    os.path.join(BASE_DIR, 'ffm_observed_20210121.csv')]
 # see issue #48
 #ADDITIONAL_DATA_FILES = [
 #    os.path.join(

@@ -21,7 +21,7 @@ def line_generator():
 
 
 def get_comid(line):
-    return line.split(',')[0]z
+    return line.split(',')[0]
 
 
 def process(line):
