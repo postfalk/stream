@@ -11,15 +11,14 @@ from step_1_ffm import format_digits
 
 
 def find_duplicates(first, second):
+    """
+    Check whether two lines can be considered duplicates
+    """
     first_parts = first.split(',')
     second_parts = second.split(',')
-    first_value = (
-        first_parts[1] + first_parts[2] + first_parts[10] +
-        first_parts[11] + first_parts[12])
-    second_value = (
-        second_parts[1] + second_parts[2] + second_parts[10] +
-        second_parts[11] + second_parts[12])
-    return (first_value == second_value)
+    first_value = first_parts[0] + first_parts[1] + first_parts[2]
+    second_value = second_parts[0] + second_parts[1] + second_parts[2]
+    return first_value == second_value
 
 
 def fill_commas(line):
@@ -44,12 +43,13 @@ def save_file(comid, lines, overwrite=True):
                 line = fill_commas(line)
                 if not first_line:
                     duplicate = find_duplicates(old_line, line)
-                if duplicate:
-                    print('Duplicates removed', path, '\n', old_line, line)
-                old_line = line
                 first_line = False
-                if not duplicate:
+                if duplicate:
+                    # print('Duplicates removed', path, '\n', old_line, line)
+                    pass
+                else:
                     output_file.write(line)
+                old_line = line
     else:
         print('Skip', path)
 

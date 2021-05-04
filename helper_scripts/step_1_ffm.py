@@ -9,7 +9,7 @@ import shutil
 import config
 
 
-BREAK_AFTER = -1
+BREAK_AFTER =  -1
 
 
 def check_wyt(first_line):
@@ -20,8 +20,11 @@ def check_wyt(first_line):
 def format_digits(text_field):
     """
     Formatting numbers to three valid digits (including trailing
-    zeros). This seems to be terrible and slow. Improve
+    zeros). This seems to be terrible slow. Improve
     """
+    # TODO: for possible improvement see
+    # https://stackoverflow.com/questions/3410976/
+    # how-to-round-a-number-to-significant-figures-in-python
     ret = '{}'.format(float('%.3g' % float(text_field)))
     length = 5 if ret[0] == '-' else 4
     while len(ret) < length:
@@ -86,8 +89,6 @@ def process(pathname):
                 out_line = out_line.replace('\n', ',,,,,\n')
                 out_file_name = os.path.join(
                     config.OUTPUT_DIRECTORY, comid + '.csv')
-                # print(out_line, end='')
-                # print(parts[1], parts[2])
                 if not (parts[1], parts[2]) in config.BLACK_LIST:
                     with open(out_file_name, 'a') as out:
                         out.write(out_line)
